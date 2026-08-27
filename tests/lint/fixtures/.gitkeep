@@ -1,0 +1,2 @@
+# Placeholder so git tracks this directory from the Sprint 1 scaffold.
+# Files that MUST fail lint, proving the boundary bites (S7-3). Excluded from typecheck.

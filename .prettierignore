@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+package-lock.json
+
+# Planning documents and vendored agent skills are not this project's code.
+# Reformatting them would produce a diff in the thousands of lines.
+docs/
+.claude/

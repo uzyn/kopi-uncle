@@ -15,12 +15,57 @@ You never lose for getting the drink wrong. You lose for making someone wait.
 
 ## Why this repo exists
 
-Demo project for the NUS-ISS Learning Festival 2026 talk, *"Agentic AI in
-Software Engineering, One Year On: Skills, Subagents, Loops"*.
+Demo project for the NUS-ISS Learning Festival 2026 talk, _"Agentic AI in
+Software Engineering, One Year On: Skills, Subagents, Loops"_.
 
 The app is built almost entirely by AI agents running an autopilot sprint
 loop. The PRD and the sprint plan are the human inputs.
 
+## Running it
+
+Two commands, no network after the install:
+
+```bash
+npm install
+npm run dev
+```
+
+That serves the app at the URL Vite prints. There is no deployed URL yet — the
+GitHub Pages workflow is the last sprint in the plan, and until then
+`npm run dev` is what the build is judged against.
+
+### The quality gate
+
+Every story is done when this chain exits 0:
+
+```bash
+npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e
+```
+
+`npm run lint` and `npm run e2e` are placeholders for now — each prints a banner
+naming the sprint that replaces it, and each exits 1 the moment its real tooling
+appears, so neither can report a green gate it did not earn. `npm run test` is
+a real Vitest from the first merge.
+
+Formatting is inside the gate, not beside it: `npm run test` runs
+`prettier --check .` as one of its assertions, so an unformatted file reds the
+`test` stage. These two commands fix it and check it without running the suite:
+
+```bash
+npm run format        # rewrite
+npm run format:check  # verify
+```
+
+### One out-of-band install step
+
+The browser binaries Playwright drives are not npm packages, so they install
+once, by hand:
+
+```bash
+npx playwright install --with-deps chromium
+```
+
+Chromium is the only browser this project ever requires.
 
 ## Documentation
 
@@ -69,7 +114,7 @@ into the one sprint that runs alone, so nothing downstream has to wait its turn
 for `package.json`.
 
 Re-cutting it that way then produced a second, more interesting failure. The
-blocking sprint had also been given the job of *binding* the 51 sprints behind
+blocking sprint had also been given the job of _binding_ the 51 sprints behind
 it — a hash-frozen screen registry, a dependency freeze enforced by a test that
 parsed the sprint plan. Its correctness could then only be judged against 51 sets
 of acceptance criteria nobody had implemented yet, and no test can check prose
@@ -98,13 +143,31 @@ the next.
 Four shifts — breakfast, lunch, tea, supper — each ramping arrival rate and
 order complexity, with a breather between them.
 
-## Planned stack
+## Stack
 
 Vite · React · TypeScript (strict) · CSS Modules · Vitest · Playwright,
 deployed static to GitHub Pages. No backend, no API keys, no runtime network
 calls, no binary image assets — all graphics are inline SVG. It has to work on
 a laptop with no internet after first load, because conference wifi is
 unreliable.
+
+## Layout
+
+```
+src/game/         pure logic, zero DOM imports — time and randomness are inputs
+src/app/          the screen registry and one file pair per screen
+src/dev/          the stub engine and fixture catalogue, deleted at integration
+src/components/   one directory per cluster, so concurrent sprints stay disjoint
+src/graphics/     inline SVG, including the drink preview
+src/storage/      the versioned localStorage wrapper
+src/styles/       tokens.css and motion.css
+scripts/          one file per gate stage that owns its own tooling
+tests/            unit, contract and e2e suites mirroring the source tree
+```
+
+The base path is derived from `GITHUB_REPOSITORY` at build time, so this
+repository's name appears nowhere as a literal and a fork, a rename or a clone
+under any name builds and deploys unchanged.
 
 ## Author
 
