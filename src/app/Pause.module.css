@@ -1,0 +1,24 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  text-align: center;
+}
+
+.heading {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.placeholderNote {
+  margin: 0;
+  font-size: 0.875rem;
+}
