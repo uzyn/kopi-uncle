@@ -1,0 +1,48 @@
+{
+  "skill_name": "sprintkit-sync",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "update the sprint plan with these review notes from our external tester:\n\n---\nSprint 3 Review — Projects & Membership\n\nTested on staging (commit abc1234).\n\n**S3-1 Project CRUD:** Mostly works but DELETE /api/projects/:id returns 200 with `{ deleted: true }` even when the project doesn't exist. Should return 404. Also, the soft-delete doesn't actually unlink tasks — I created 3 tasks under project 7, deleted the project, and the tasks still show projectId: 7 in GET /api/tasks. They should either be unlinked (projectId: null) or return with a flag indicating the project is deleted.\n\n**S3-2 Membership:** Adding a member works, but if you add the same user twice with a different role, it creates a duplicate row instead of updating the role. GET /api/projects/:id/members then returns the user twice with conflicting roles. The role-based access checks seem fine for editor vs viewer, but I didn't test edge cases like a viewer trying to PATCH a project.\n\n**S3-3 Task-project linking:** PATCH works for assigning, but there's no way to UN-assign a task from a project. Sending `{ projectId: null }` gets rejected by Joi validation because projectId is typed as string (UUID). The GET /api/projects/:id/tasks endpoint doesn't exist yet — returns 404.\n\nOverall: core happy paths work but there are gaps around error handling and edge cases. Would not ship this as-is.\n---",
+      "expected_output": "Sprint file updated with Sprint 3 marked appropriately, a followup Sprint 3.1 created with self-contained stories that include full context from the review (the specific bugs, endpoints, observed vs expected behavior) so a developer can work on them without seeing the original review notes.",
+      "files": [],
+      "expectations": [
+        "The sprint file contains a followup sprint (3.1) for incomplete Sprint 3 work",
+        "The followup sprint stories mention the specific DELETE endpoint returning 200 instead of 404 for non-existent projects",
+        "The followup sprint mentions that soft-delete doesn't unlink tasks (tasks still show projectId after project deletion)",
+        "The followup sprint mentions the duplicate member row bug when adding same user twice with different role",
+        "The followup sprint mentions that projectId: null is rejected by Joi validation, preventing task un-assignment",
+        "The followup sprint mentions the missing GET /api/projects/:id/tasks endpoint",
+        "A developer reading only the sprint file could understand and fix each issue without seeing the original review"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "hey, I got this bug report from a user on github (issue #47), can you update the sprint plan:\n\n---\n**Title:** WebSocket connection drops silently after ~60 seconds of inactivity\n\n**Environment:** Node 20.11, Chrome 124, deployed on Railway\n\n**Steps to reproduce:**\n1. Log in and open the task board\n2. Leave the tab open without interacting for ~60 seconds\n3. Have another user assign a task to you\n4. No notification appears. Console shows `WebSocket is already in CLOSING state`\n\n**Expected:** Should receive real-time notification regardless of idle time\n\n**Actual:** Connection silently dies. No reconnection attempt. User has to refresh to get updates.\n\n**Additional context:** Railway's proxy has a 60-second idle timeout for WebSocket connections. Most apps handle this with a ping/pong heartbeat. I don't see any keep-alive mechanism in the WS setup. This basically makes the real-time feature unusable in production.\n---\n\nSprint 4 hasn't started yet but this should be captured there.",
+      "expected_output": "Sprint 4 stories updated to include the WebSocket idle timeout bug with full context — the Railway 60s proxy timeout, the missing ping/pong heartbeat, the CLOSING state error, and the lack of reconnection. A developer should understand exactly what's happening and why from the sprint file alone.",
+      "files": [],
+      "expectations": [
+        "Sprint 4 stories now reference the Railway proxy 60-second idle timeout as the root cause",
+        "The heartbeat/ping-pong requirement references the specific failure mode (connection drops silently, no reconnection)",
+        "The 'WebSocket is already in CLOSING state' error message is captured in the sprint entry",
+        "The sprint entry mentions that reconnection logic is needed (not just heartbeat)",
+        "The issue context is embedded in sprint stories, not just referenced as 'see issue #47'"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Sprint 2 was already marked done but I just realized we missed something. Our security auditor sent this note:\n\n---\nRe: TaskFlow API security review\n\nTwo issues with the task endpoints:\n\n1. **IDOR on task access** — GET /api/tasks/:id doesn't verify that the requesting user owns the task or is a member of the task's project. Any authenticated user can read any task by guessing/incrementing the UUID. Same for PATCH and DELETE. You need ownership or membership checks on all single-task endpoints.\n\n2. **No rate limiting on auth endpoints** — POST /api/auth/login and /api/auth/register have no rate limiting. I was able to send 10,000 login attempts in under a minute. This enables credential stuffing. At minimum, add per-IP rate limiting on auth routes (suggest 10 req/min for login, 5 req/min for register).\n\nPriority: both are P0, should be fixed before any public deployment.\n---\n\nPlease update the sprint plan to address these.",
+      "expected_output": "A followup Sprint 2.1 created with self-contained stories describing the IDOR vulnerability (which endpoints, what's missing — ownership/membership checks) and the missing rate limiting (which endpoints, what was observed — 10k attempts/min, suggested thresholds). Context is detailed enough for a developer to implement fixes without the original audit note.",
+      "files": [],
+      "expectations": [
+        "A followup sprint (2.1) is created after Sprint 2 for the security fixes",
+        "The IDOR story mentions the specific affected endpoints (GET/PATCH/DELETE /api/tasks/:id)",
+        "The IDOR story explains what's missing (ownership or project membership verification)",
+        "The rate limiting story mentions the specific auth endpoints and the observed abuse (10k attempts/min)",
+        "The rate limiting story includes the suggested thresholds (10 req/min login, 5 req/min register)",
+        "Both stories are marked as P0/high priority",
+        "A developer reading only the sprint file could implement both fixes without the original audit note"
+      ]
+    }
+  ]
+}

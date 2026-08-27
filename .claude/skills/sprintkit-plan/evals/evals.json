@@ -1,0 +1,32 @@
+{
+  "skill_name": "sprintkit-plan",
+  "evals": [
+    {
+      "id": 1,
+      "name": "tight-timeline",
+      "prompt": "I need a sprint plan for the Kopi Uncle project. The PRD is at docs/prd.md. I'm a solo developer working 12-hour days with Claude Code. Target: ship v1 in 2 weeks.",
+      "expected_output": "Should: (1) warn that 2 weeks is very aggressive for the full PRD scope, (2) propose a v1 scope cut with specific features deferred to v2, (3) ask for confirmation before generating the plan, (4) produce docs/sprint.md with 2.5-day sprints",
+      "files": [
+        "evals/files/kopi-uncle/docs/prd.md"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "no-timeline",
+      "prompt": "Can you create a scrum sprint plan for the Kopi Uncle browser game? I'm working on it solo with AI assistance (Claude Code). Check docs/prd.md for details.",
+      "expected_output": "Should: (1) read the PRD, (2) ask for the target timeline before planning, (3) NOT assume a timeline or generate a plan without knowing the timeline",
+      "files": [
+        "evals/files/kopi-uncle/docs/prd.md"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "comfortable-timeline",
+      "prompt": "Please create a sprint plan for the Kopi Uncle kopitiam game. docs/prd.md has the full requirements. I'm solo with heavy Claude Code usage, 12-hour days. I have 8 weeks (about 56 days / 22 sprints at 2.5 days each). Focus on getting through Phase 1 and Phase 2 from the PRD — that's Foundation and Core Game. Phase 3 and 4 can be v2.",
+      "expected_output": "Should: (1) recognize the timeline is comfortable for Phase 1+2 scope, (2) produce a clean plan with no alarm bells, (3) write docs/sprint.md with properly sequenced 2.5-day sprints covering Phase 1 (Foundation) and Phase 2 (Core Game), (4) each sprint has goal + stories + acceptance criteria",
+      "files": [
+        "evals/files/kopi-uncle/docs/prd.md"
+      ]
+    }
+  ]
+}

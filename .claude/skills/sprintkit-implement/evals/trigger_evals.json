@@ -1,0 +1,82 @@
+[
+  {
+    "query": "implement sprint 3",
+    "should_trigger": true
+  },
+  {
+    "query": "lets work through the kopi grammar parser story, its in our sprint plan",
+    "should_trigger": true
+  },
+  {
+    "query": "implement the current sprint",
+    "should_trigger": true
+  },
+  {
+    "query": "ok time to start on sprint 6, we need to get the queue and patience engine done this week",
+    "should_trigger": true
+  },
+  {
+    "query": "can you implement S4-1 from our sprint plan? its the order generator story",
+    "should_trigger": true
+  },
+  {
+    "query": "we need to finish the scoring module story this week - its listed in sprint 5 of our plan in docs/sprint.md",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to work through the exhaustive round-trip test acceptance criteria today, its sprint 3",
+    "should_trigger": true
+  },
+  {
+    "query": "start on the next sprint story - we are tracking in docs/sprint.md and sprint 4 is up next",
+    "should_trigger": true
+  },
+  {
+    "query": "lets implement the drink preview SVG story from sprint 8 of our plan",
+    "should_trigger": true
+  },
+  {
+    "query": "we are starting sprint 6 today for our kopitiam game, implement the tick/applyAction reducer story (S6-2)",
+    "should_trigger": true
+  },
+  {
+    "query": "create a sprint plan from this PRD",
+    "should_trigger": false
+  },
+  {
+    "query": "what does sprint 3 include? can you summarize it for me",
+    "should_trigger": false
+  },
+  {
+    "query": "update our sprint.md to add a new story about Milo as a third base with acceptance criteria",
+    "should_trigger": false
+  },
+  {
+    "query": "can you review my implementation of the queue engine? i think there is a bug in the patience drain",
+    "should_trigger": false
+  },
+  {
+    "query": "implement a drink order parser for a bubble tea menu, standard topping rules",
+    "should_trigger": false
+  },
+  {
+    "query": "whats the status of sprint 3? which acceptance criteria have we completed so far",
+    "should_trigger": false
+  },
+  {
+    "query": "write a PRD for the improvements we want to make to the daily challenge - it needs better share text",
+    "should_trigger": false
+  },
+  {
+    "query": "parseOrder is broken - parseOrder('Kopi C siew dai') returns null instead of a Drink, can you fix it",
+    "should_trigger": false
+  },
+  {
+    "query": "continue where we left off with the grammar implementation - we were in the middle of writing the parser",
+    "should_trigger": false
+  },
+  {
+    "query": "generate a comprehensive test suite for the scoring module covering combo caps and shift clear bonuses",
+    "should_trigger": false
+  }
+]

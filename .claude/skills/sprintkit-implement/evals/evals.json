@@ -1,0 +1,58 @@
+{
+  "skill_name": "sprintkit-implement",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "implement sprint 3",
+      "expected_output": "Reads docs/prd.md and docs/sprint.md, identifies Sprint 3 (Kopi Grammar Parser), asks clarifying questions, implements src/game/grammar.ts with the exhaustive round-trip test, creates PR-ready commit with per-criterion tracking",
+      "files": [
+        "evals/files/kopi-uncle/docs/prd.md",
+        "evals/files/kopi-uncle/docs/sprint.md"
+      ],
+      "assertions": [
+        "summary.md mentions reading prd.md and/or sprint.md before writing code",
+        "Sprint 3 is correctly identified as the Kopi Grammar Parser (S3-1 / src/game/grammar.ts)",
+        "summary.md documents at least one question it would ask the user OR lists explicit assumptions made before coding",
+        "test_output.txt exists and shows npm test / vitest was actually run",
+        "test_output.txt shows no test failures (all tests pass)",
+        "commit_message.txt tracks acceptance criteria with pass/fail markers (e.g. checkmarks or checkboxes)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "let's work through the kopi grammar parser story",
+      "expected_output": "Recognizes this references S3-1, reads sprint docs to locate it formally, asks questions, implements formatOrder/parseOrder/isValidDrink/matches with the exhaustive round-trip test, creates PR-ready commit",
+      "files": [
+        "evals/files/kopi-uncle/docs/prd.md",
+        "evals/files/kopi-uncle/docs/sprint.md"
+      ],
+      "assertions": [
+        "summary.md shows it read the sprint plan to formally locate the story",
+        "summary.md or implementation correctly links the request to story S3-1 in Sprint 3",
+        "summary.md documents at least one question it would ask the user OR lists explicit assumptions made before coding",
+        "formatOrder, parseOrder, isValidDrink and matches are implemented in src/game/grammar.ts",
+        "the round-trip test enumerates all valid drinks rather than sampling",
+        "test_output.txt exists and shows npm test / vitest was actually run",
+        "test_output.txt shows no test failures (all tests pass)",
+        "commit_message.txt tracks acceptance criteria with pass/fail markers"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "implement the current sprint",
+      "expected_output": "Inspects codebase state to determine which sprint is current (Sprints 1-2 are DONE, so Sprint 3), explains reasoning, asks clarifying questions, implements with tests, PR-ready commit",
+      "files": [
+        "evals/files/kopi-uncle/docs/prd.md",
+        "evals/files/kopi-uncle/docs/sprint.md"
+      ],
+      "assertions": [
+        "summary.md shows it inspected the sprint plan and codebase (git log, existing files) to determine which sprint is current",
+        "summary.md explains its reasoning for which sprint it chose as 'current'",
+        "summary.md documents at least one question it would ask the user OR lists explicit assumptions made",
+        "test_output.txt exists and shows npm test / vitest was actually run",
+        "test_output.txt shows no test failures (all tests pass)",
+        "commit_message.txt tracks acceptance criteria with pass/fail markers"
+      ]
+    }
+  ]
+}

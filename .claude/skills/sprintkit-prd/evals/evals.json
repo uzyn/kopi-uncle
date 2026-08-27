@@ -1,0 +1,23 @@
+{
+  "skill_name": "sprintkit-prd",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to build a CLI tool that helps developers manage their .env files across multiple environments (dev, staging, prod). Right now I just manually copy-paste and it's error-prone. Can you help me write a PRD for this?",
+      "expected_output": "Should conduct a conversational interview asking about target users, supported environments, encryption needs, team collaboration, then generate a PRD to docs/prd.md",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We need a feature for our existing app — a notification system that can send emails and push notifications when certain events happen. Help me define the requirements.",
+      "expected_output": "Should explore what events trigger notifications, who receives them, delivery channels, frequency/batching, then research codebase for integration points and generate PRD",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I have this idea for a browser extension that highlights AI-generated text on any webpage. Not sure if it's feasible. Can we scope this out?",
+      "expected_output": "Should probe feasibility, detection approach, supported browsers, privacy concerns, do web research on AI detection techniques, then generate a realistic PRD acknowledging technical limitations",
+      "files": []
+    }
+  ]
+}

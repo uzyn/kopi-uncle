@@ -1,0 +1,56 @@
+{
+  "skill_name": "sprintkit-graph",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fan-out-and-schedule",
+      "prompt": "Before I kick off autopilot — show me what's actually going to run in parallel here, and how long it'll take.",
+      "expected_output": "Should write docs/sprint-graph.md containing a mermaid dependency graph, and report that Sprints 2, 3 and 4 are ready now, that the plan is 22h serial versus 13h on 4 runners (about 1.7x), and that the critical path runs 1 -> 2 -> 5 -> 7 -> 8. Should not modify the sprint file.",
+      "files": [
+        "evals/files/kopi-uncle/docs/sprint.md"
+      ],
+      "assertions": [
+        "Writes a docs/sprint-graph.md file",
+        "Output file contains a ```mermaid fenced block",
+        "Identifies exactly Sprints 2, 3 and 4 as ready to start now",
+        "Reports the serial total as 22h and the 4-runner wall-clock as 13h",
+        "Reports a speedup of approximately 1.7x",
+        "Names the critical path as Sprint 1 -> 2 -> 5 -> 7 -> 8",
+        "Groups sprints into track lanes (M0 blocking, Track A, Track B, Docs, M2)",
+        "Leaves docs/sprint.md byte-identical to the fixture"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "diagnose-underuse",
+      "prompt": "we've got 4 runners configured but it feels like the build is barely using them. is that the plan's fault or the runners?",
+      "expected_output": "Should surface the audit findings — 42% runner utilisation across 4 runners, and that the graph is too narrow to keep them busy — and explain that the shape of the dependency graph, not the runner count, is the constraint. Should be honest that adding runners will not help.",
+      "files": [
+        "evals/files/kopi-uncle/docs/sprint.md"
+      ],
+      "assertions": [
+        "Reports runner utilisation as approximately 42%",
+        "Attributes the underuse to the dependency graph's width rather than the runner count",
+        "States or implies that adding more runners would not reduce wall-clock",
+        "Mentions the critical path as the binding constraint",
+        "Does not recommend changes it then applies without being asked"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "unschedulable-plan",
+      "prompt": "Can you map out the sprint dependencies for me? Something feels off about this plan but I can't put my finger on it.",
+      "expected_output": "Should detect that Sprints 2, 3 and 4 form a dependency cycle and that Sprint 5 depends on a nonexistent Sprint 99. Should report both as blockers and explicitly decline to give a wall-clock or speedup figure, because an unschedulable plan has no schedule.",
+      "files": [
+        "evals/files/broken/docs/sprint.md"
+      ],
+      "assertions": [
+        "Detects the dependency cycle among Sprints 2, 3 and 4",
+        "Detects that Sprint 5 depends on a nonexistent Sprint 99",
+        "Reports both findings as blockers rather than warnings",
+        "Does NOT report a makespan, speedup or wall-clock estimate",
+        "Explains that a cyclic plan cannot be scheduled at all"
+      ]
+    }
+  ]
+}

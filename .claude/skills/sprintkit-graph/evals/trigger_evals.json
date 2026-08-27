@@ -1,0 +1,82 @@
+[
+  {
+    "query": "before i kick off autopilot tonight can you show me what the sprint plan actually looks like as a graph? i want to check that 7 and 15 really do start at the same time like the plan claims",
+    "should_trigger": true
+  },
+  {
+    "query": "we've got 4 runners configured but watching it go it looks like theres only ever one thing happening. is that the plan or the scheduler",
+    "should_trigger": true
+  },
+  {
+    "query": "whats the critical path through docs/sprint.md",
+    "should_trigger": true
+  },
+  {
+    "query": "i just spent an hour rewriting the Dependencies lines in the sprint plan to be more honest about what actually blocks what. did that buy us any real parallelism or did i just shuffle things around",
+    "should_trigger": true
+  },
+  {
+    "query": "can you draw out which sprints in our plan are independent of each other? trying to work out if its worth spinning up a second worktree",
+    "should_trigger": true
+  },
+  {
+    "query": "roughly how long is the whole PRD going to take if we run four sprints at a time versus just going one at a time",
+    "should_trigger": true
+  },
+  {
+    "query": "show me the tracks in the current scrum plan",
+    "should_trigger": true
+  },
+  {
+    "query": "which sprints are unblocked and could start right now given whats already merged",
+    "should_trigger": true
+  },
+  {
+    "query": "honest question — is our sprint plan just a queue pretending to be a plan? feels like everything depends on the thing above it",
+    "should_trigger": true
+  },
+  {
+    "query": "map out whats blocking what in docs/kopi-sprint.md, i need a picture for the standup tomorrow",
+    "should_trigger": true
+  },
+  {
+    "query": "read docs/prd.md and break it into 2.5 day sprints with acceptance criteria for each story",
+    "should_trigger": false
+  },
+  {
+    "query": "ok lets go, run through all the remaining sprints and dont stop until the PRD is done",
+    "should_trigger": false
+  },
+  {
+    "query": "sprint 7 just merged to main, can you update the plan and mark it done",
+    "should_trigger": false
+  },
+  {
+    "query": "implement sprint 3 — the grammar parser stories — and open a PR when the gate is green",
+    "should_trigger": false
+  },
+  {
+    "query": "review PR #12 against sprint 5's acceptance criteria and the PRD, be strict about the coverage threshold",
+    "should_trigger": false
+  },
+  {
+    "query": "can you make me a mermaid ER diagram of our postgres schema? the migrations are in db/migrations and theres about 14 tables",
+    "should_trigger": false
+  },
+  {
+    "query": "draw out the git branch topology for this repo, i want to see how far epic/checkout has drifted from main",
+    "should_trigger": false
+  },
+  {
+    "query": "pull our team velocity for the last 6 sprints out of jira and chart it, my manager wants a trend line",
+    "should_trigger": false
+  },
+  {
+    "query": "whats the dependency graph of our npm packages look like? im trying to find out why installing one thing pulls in 400 modules",
+    "should_trigger": false
+  },
+  {
+    "query": "add a Touches: line to sprint 4 in the sprint plan, it should be src/render/** and tests/render/**",
+    "should_trigger": false
+  }
+]
