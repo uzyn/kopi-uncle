@@ -1,12 +1,22 @@
 // @vitest-environment jsdom
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import App from '../../src/app/App';
 
-// This suite runs under jsdom, where `import.meta.url` is not a file URL.
-const ROOT = process.cwd();
+/*
+ * Derived from this module's own location, like every other suite here, so the
+ * paths below do not depend on the runner's cwd.
+ *
+ * Spelled out rather than as `new URL('../..', import.meta.url)` — the form the
+ * node-environment suites use — because this file runs under jsdom, where Vite
+ * applies its web asset transform and rewrites that exact literal pattern into
+ * a served `http://localhost/@fs/...` URL that `fileURLToPath` then rejects.
+ * `import.meta.url` itself is a file URL in both environments.
+ */
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const TITLE_CSS = join(ROOT, 'src/app/TitleScreen.module.css');
 const TOKENS_CSS = join(ROOT, 'src/styles/tokens.css');
 
@@ -30,12 +40,21 @@ function tokenSource(): string {
   return existsSync(TOKENS_CSS) ? readFileSync(TOKENS_CSS, 'utf8') : '';
 }
 
+/** Deep enough for any real token chain, shallow enough to catch a cycle. */
+const MAX_TOKEN_HOPS = 16;
+
 /**
  * Resolves a colour that may be written as a literal now and as a design token
  * later: S5-1 replaces these literals with var(--teak) / var(--condensed-cream)
  * once src/styles/tokens.css lands, and this assertion has to survive that.
  */
-function resolveColour(value: string, tokens: string): string {
+function resolveColour(value: string, tokens: string, hops = 0): string {
+  expect(
+    hops,
+    `resolving "${value}" took more than ${MAX_TOKEN_HOPS} var() hops — ` +
+      'src/styles/tokens.css declares a cycle',
+  ).toBeLessThan(MAX_TOKEN_HOPS);
+
   const varMatch = /var\(\s*(--[A-Za-z0-9-]+)\s*(?:,\s*([^)]+))?\)/.exec(value);
   if (varMatch === null) {
     return value.trim();
@@ -43,14 +62,14 @@ function resolveColour(value: string, tokens: string): string {
   const [, token, fallback] = varMatch;
   const declared = new RegExp(`${token}\\s*:\\s*([^;]+)`).exec(tokens);
   if (declared !== null) {
-    return resolveColour(declared[1].trim(), tokens);
+    return resolveColour(declared[1].trim(), tokens, hops + 1);
   }
   expect(
     fallback,
     `${token} is used by TitleScreen.module.css but declared in neither ` +
       'src/styles/tokens.css nor a var() fallback',
   ).toBeTruthy();
-  return resolveColour(fallback, tokens);
+  return resolveColour(fallback, tokens, hops + 1);
 }
 
 function channels(hex: string): [number, number, number] {
@@ -123,6 +142,22 @@ describe('the title screen', () => {
         resolveColour('var(--condensed-cream)', tokens),
       ),
     ).toBeCloseTo(11.44, 2);
+  });
+
+  it('says what is missing when the CSS it parses does not hold up', () => {
+    // These helpers outlive this sprint — S5-1 reruns them against a token file
+    // this test cannot see — so their failure messages are the diagnosis a
+    // future sprint gets, and are asserted rather than assumed.
+    expect(() => ruleBody('.wordmark {\n  color: #4a2c18;\n}', 'screen')).toThrow(
+      /no rule for \.screen/,
+    );
+    expect(() => declaration('color: #4a2c18;', 'background-color')).toThrow(
+      /no "background-color" declaration found/,
+    );
+    expect(() => resolveColour('var(--teak)', '')).toThrow(/declared in neither/);
+    expect(() => resolveColour('var(--teak)', ':root { --teak: var(--teak); }')).toThrow(
+      /declares a cycle/,
+    );
   });
 
   it('computes a ratio the WCAG reference values agree with', () => {

@@ -47,7 +47,9 @@ naming the sprint that replaces it, and each exits 1 the moment its real tooling
 appears, so neither can report a green gate it did not earn. `npm run test` is
 a real Vitest from the first merge.
 
-Formatting is separate from the gate chain:
+Formatting is inside the gate, not beside it: `npm run test` runs
+`prettier --check .` as one of its assertions, so an unformatted file reds the
+`test` stage. These two commands fix it and check it without running the suite:
 
 ```bash
 npm run format        # rewrite

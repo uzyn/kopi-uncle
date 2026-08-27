@@ -9,7 +9,10 @@
  *
  * It refuses to pass vacuously: the moment an `eslint.config.*` exists, a real
  * linter is available and reporting green from here would be a lie, so this
- * exits 1 and forces the swap.
+ * exits 1 and forces the swap. That guard takes no override — the directory it
+ * inspects is always this file's own parent, so nothing in the environment can
+ * talk it into a green gate. The test that exercises the refusal copies this
+ * script into a temporary tree and runs the copy.
  *
  * Remove the KOPI_SCAFFOLD_PLACEHOLDER marker above when replacing this file —
  * the scaffold tests that assert placeholder behaviour retire on its absence.
@@ -20,8 +23,7 @@ import { dirname, resolve } from 'node:path';
 
 const REPLACED_BY = 'S2-1 (Sprint 2 — ESLint 9, type-aware)';
 
-const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const root = process.env.KOPI_SCAFFOLD_ROOT ? resolve(process.env.KOPI_SCAFFOLD_ROOT) : defaultRoot;
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 function eslintConfigIn(dir) {
   let entries;

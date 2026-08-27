@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,22 +22,25 @@ function scriptFilesIn(command: string): string[] {
   return command.split(/\s+/).filter((token) => /\.(mjs|cjs|js|ts)$/.test(token));
 }
 
-function runNode(script: string, root?: string) {
-  const env = { ...process.env };
-  if (root !== undefined) {
-    env.KOPI_SCAFFOLD_ROOT = root;
-  } else {
-    delete env.KOPI_SCAFFOLD_ROOT;
-  }
-  return spawnSync(process.execPath, [join(ROOT, 'scripts', script)], {
-    cwd: ROOT,
+function runNode(script: string, root: string = ROOT, env: NodeJS.ProcessEnv = process.env) {
+  return spawnSync(process.execPath, [join(root, 'scripts', script)], {
+    cwd: root,
     env,
     encoding: 'utf8',
   });
 }
 
-function withTempRoot(build: (root: string) => void): string {
+/**
+ * A throwaway checkout with the placeholder copied into its own `scripts/`.
+ * The scripts take no root override — each inspects its own parent directory
+ * and nothing else — so copying is the only way to trip the refusal without
+ * writing a real `eslint.config.js` or `*.spec.ts` into the working tree, where
+ * a crashed test would leave the gate red.
+ */
+function withTempRoot(script: string, build: (root: string) => void): string {
   const root = mkdtempSync(join(tmpdir(), 'kopi-scaffold-'));
+  mkdirSync(join(root, 'scripts'), { recursive: true });
+  copyFileSync(join(ROOT, 'scripts', script), join(root, 'scripts', script));
   build(root);
   return root;
 }
@@ -102,7 +105,7 @@ describe.skipIf(!isPlaceholder('lint.mjs'))('the lint placeholder', () => {
   });
 
   it('refuses to pass once an eslint config exists', () => {
-    const root = withTempRoot((dir) => {
+    const root = withTempRoot('lint.mjs', (dir) => {
       writeFileSync(join(dir, 'eslint.config.js'), 'export default [];\n');
     });
     try {
@@ -111,6 +114,22 @@ describe.skipIf(!isPlaceholder('lint.mjs'))('the lint placeholder', () => {
       expect(result.stderr).toContain('eslint.config.js');
     } finally {
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('cannot be pointed away from its own directory to buy a green gate', () => {
+    const root = withTempRoot('lint.mjs', (dir) => {
+      writeFileSync(join(dir, 'eslint.config.js'), 'export default [];\n');
+    });
+    const elsewhere = mkdtempSync(join(tmpdir(), 'kopi-elsewhere-'));
+    try {
+      // The refusal is the one guarantee this file exists to provide. An
+      // environment pointing it at a config-free directory must not lift it.
+      const result = runNode('lint.mjs', root, { ...process.env, KOPI_SCAFFOLD_ROOT: elsewhere });
+      expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(elsewhere, { recursive: true, force: true });
     }
   });
 });
@@ -123,7 +142,7 @@ describe.skipIf(!isPlaceholder('e2e.mjs'))('the e2e placeholder', () => {
   });
 
   it('refuses to pass once tests/e2e holds a spec, at any depth', () => {
-    const root = withTempRoot((dir) => {
+    const root = withTempRoot('e2e.mjs', (dir) => {
       mkdirSync(join(dir, 'tests', 'e2e', 'nested'), { recursive: true });
       writeFileSync(join(dir, 'tests', 'e2e', 'nested', 'deep.spec.ts'), '');
     });
@@ -133,6 +152,21 @@ describe.skipIf(!isPlaceholder('e2e.mjs'))('the e2e placeholder', () => {
       expect(result.stderr).toContain('deep.spec.ts');
     } finally {
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('cannot be pointed away from its own directory to buy a green gate', () => {
+    const root = withTempRoot('e2e.mjs', (dir) => {
+      mkdirSync(join(dir, 'tests', 'e2e'), { recursive: true });
+      writeFileSync(join(dir, 'tests', 'e2e', 'walkout.spec.ts'), '');
+    });
+    const elsewhere = mkdtempSync(join(tmpdir(), 'kopi-elsewhere-'));
+    try {
+      const result = runNode('e2e.mjs', root, { ...process.env, KOPI_SCAFFOLD_ROOT: elsewhere });
+      expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(elsewhere, { recursive: true, force: true });
     }
   });
 });

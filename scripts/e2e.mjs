@@ -9,7 +9,10 @@
  *
  * It refuses to pass vacuously: the moment `tests/e2e/` holds a spec — at any
  * depth — there is a real browser test that this script is not running, so it
- * exits 1 and forces the swap.
+ * exits 1 and forces the swap. That guard takes no override — the tree it walks
+ * is always this file's own parent, so nothing in the environment can talk it
+ * into a green gate. The test that exercises the refusal copies this script
+ * into a temporary tree and runs the copy.
  *
  * Remove the KOPI_SCAFFOLD_PLACEHOLDER marker above when replacing this file —
  * the scaffold tests that assert placeholder behaviour retire on its absence.
@@ -20,8 +23,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 
 const REPLACED_BY = 'S6-1 (Sprint 6 — Playwright under the base path)';
 
-const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const root = process.env.KOPI_SCAFFOLD_ROOT ? resolve(process.env.KOPI_SCAFFOLD_ROOT) : defaultRoot;
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const e2eDir = join(root, 'tests', 'e2e');
 
 function findSpecs(dir) {
