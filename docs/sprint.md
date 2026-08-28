@@ -571,7 +571,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 9 — The stub engine and the fixture catalogue [NOT STARTED]
+## Sprint 9 — The stub engine and the fixture catalogue [IN PROGRESS]
 
 **Goal:** Ship the scripted replay and the named state catalogue the presentation track develops against, so that queue cards, moods, break cards and game-over screens are all reachable without an engine.
 
