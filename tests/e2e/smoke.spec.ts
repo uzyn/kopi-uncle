@@ -29,3 +29,11 @@ test('loads every asset the page asks for', async ({ page }) => {
 
   expect(failures).toEqual([]);
 });
+
+// SCRATCH: a deliberate e2e failure proving the gate uploads its artifacts. Never merged.
+test('SCRATCH deliberate e2e failure', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.getByRole('heading', { name: 'THIS HEADING DOES NOT EXIST' })).toBeVisible({
+    timeout: 3000,
+  });
+});
