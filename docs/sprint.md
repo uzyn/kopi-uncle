@@ -152,7 +152,7 @@ unattended run, and it buys nothing the local server does not already give you.
 | Tier | Sprints | What exists when it lands |
 |---|---|---|
 | **0 — Floor** | 1 | `npm run dev` serves a page, the gate chain runs, every dependency installed. **This must land.** |
-| **1 — Contract** | 2–13, 5.1, 54 | The frozen seam, CI, the lint rules, tokens, the stub and fixtures — and the fan is visibly running |
+| **1 — Contract** | 2–13, 3.1, 5.1, 54 | The frozen seam, CI, the lint rules, tokens, the stub and fixtures — and the fan is visibly running |
 | **2 — Tracks** | 14–35 | Grammar exhaustively verified; the bag and cup render; slot controls and queue cards work against fixtures |
 | **3 — Playable** | 36–46 | Someone can run it locally and play the game |
 | **4 — Ship** | 47–52 | Daily, share, stats, screens, accessibility |
@@ -277,7 +277,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 3 — The frozen contract [IN PROGRESS]
+## Sprint 3 — The frozen contract [DONE]
 
 **Goal:** Freeze `types.ts`, `config.ts`, `view.ts` and the three engine signatures — everything both tracks compile against — so that every logic and presentation sprint after this one can start from the same fixed surface.
 
@@ -286,6 +286,11 @@ committed golden fixtures.
 **Dependencies:** Sprint 1
 **Touches:** `src/game/types.ts`, `src/game/config.ts`, `src/game/view.ts`, `src/game/engine.ts`, `tests/contract/**`
 
+**Rulings recorded here** (per §13's standing never-ask instruction — these are decided, not open):
+
+- **R-S3-a — `moodFor(patienceMs, maxPatienceMs)` with `maxPatienceMs <= 0` returns `'angry'`.** The ratio is undefined (`0/0 → NaN`, and any `NaN` comparison is false), so the band table cannot be consulted. `'angry'` is the safe end of §9.6's scale: a customer with no patience budget is out of patience. Neither track may re-derive the ratio (§9.6), so this is the only place the case can be handled. *(PF-5.)*
+- **R-S3-b — within Endless, `customerIndex` accumulates across supper repeats and is never reset.** §8.5 pins `shiftIndex >= 3` but says nothing about the customer index, and the two readings diverge: only the cumulative reading makes §8.5's "held at their floors — 2.0s and 10.0s, constant" true. Under a per-repeat reset the first customer of the second supper would get `gapMsFor(3, 1) === 3000` and `patienceMsFor(3, 1) === 12000`, the shift's *start* values. The selectors deliberately bake in neither reading and both are pinned by tests in `tests/contract/`, so this ruling is implemented by the sprints that call them — Sprint 18 (queue/arrivals) and Sprint 21 (the reducer). §8.5's "each repeat is its own shift for break and bonus purposes" governs break and bonus only and does not reset the index. *(PF-6.)*
+
 ### S3-1 — `src/game/types.ts` exactly per §10.3
 
 *As the implementing agent on either track, I want the state and action shapes fixed and type-tested, so that a contract drift shows up as a red typecheck rather than at M2 integration.*
@@ -293,12 +298,12 @@ committed golden fixtures.
 **Technical context:** §10.3 warns that `SetSlot` does not narrow on destructuring — `{ slot, value }` widens to `keyof Drink` and a union of all six value types, so `draft[slot] = value` will not compile under `strict`. The generic `setSlot<K extends keyof Drink>` helper is the single place the unavoidable cast is allowed to live.
 
 **Acceptance criteria:**
-- [ ] `src/game/types.ts` declares, verbatim in shape, every type in §10.3: `Phase`, `Mode`, `Tier`, `ShiftId`, `Mood`, `ServeResult`, the seven-variant `GameEvent`, `Drink` and its six slot unions, `Customer`, `GameState` with all twenty fields, the `SetSlot` mapped union, `Action`, and the `setSlot` signature.
-- [ ] A `tests/` type test using `expectTypeOf` asserts `SetSlot` expands to exactly six variants — one assertion per slot, e.g. `Extract<SetSlot, { slot: 'sugar' }>['value']` equals `Sugar` — and asserts `Extract<SetSlot, { slot: 'flavour' }>` is `never`.
-- [ ] A type test asserts `Action['type']` equals the union of exactly seven literals: `'START_RUN' | 'FOCUS' | 'SET_SLOT' | 'SERVE' | 'DISMISS_BREAK' | 'PAUSE' | 'RESUME'`.
-- [ ] Exhaustiveness over `Action` is proven at compile time by a `satisfies never` assignment with no runtime statement, per §10.7's ban on unreachable `default: throw` arms.
-- [ ] `setSlot` is implemented with exactly one cast and is asserted over all 240 valid drinks × six slots to return a new object whose other five slots are strictly equal to the input's.
-- [ ] `npm run test` runs Vitest with typechecking enabled, so a failing `expectTypeOf` assertion is a gate failure; `src/game/types.ts` is in the coverage `exclude` list per §10.7.
+- [x] `src/game/types.ts` declares, verbatim in shape, every type in §10.3: `Phase`, `Mode`, `Tier`, `ShiftId`, `Mood`, `ServeResult`, the seven-variant `GameEvent`, `Drink` and its six slot unions, `Customer`, `GameState` with all 22 fields, the `SetSlot` mapped union, `Action`, and the `setSlot` signature.
+- [x] A `tests/` type test using `expectTypeOf` asserts `SetSlot` expands to exactly six variants — one assertion per slot, e.g. `Extract<SetSlot, { slot: 'sugar' }>['value']` equals `Sugar` — and asserts `Extract<SetSlot, { slot: 'flavour' }>` is `never`.
+- [x] A type test asserts `Action['type']` equals the union of exactly seven literals: `'START_RUN' | 'FOCUS' | 'SET_SLOT' | 'SERVE' | 'DISMISS_BREAK' | 'PAUSE' | 'RESUME'`.
+- [x] Exhaustiveness over `Action` is proven at compile time by a `satisfies never` assignment with no runtime statement, per §10.7's ban on unreachable `default: throw` arms.
+- [x] `setSlot` is implemented with exactly one cast and is asserted over all 240 valid drinks × six slots to return a new object whose other five slots are strictly equal to the input's.
+- [x] A broken `expectTypeOf` assertion is a gate failure — the assertions live in ordinary `*.test.ts` files, so `npm run typecheck` (`tsc --noEmit` over `tests/`) reds on one today, verified by mutation. *(PF-3, drained at the Sprint 3 sync: enabling Vitest's own `typecheck` and adding `src/game/types.ts` to the coverage `exclude` both live in `vitest.config.ts`, which only Sprint 8 touches — S8-1 already carries both.)*
 
 ### S3-2 — `src/game/config.ts` and the three selectors
 
@@ -307,13 +312,13 @@ committed golden fixtures.
 **Technical context:** The shift table is not flat: tea splits tier mid-shift, supper decays patience per customer, and Endless pins `shiftIndex` at 3 while holding both gap and patience at their floors. Those three formulas live in the selectors and nowhere else.
 
 **Acceptance criteria:**
-- [ ] `src/game/config.ts` exports one frozen object holding, at minimum: queue cap 3, hearts 3, `PATIENCE_FLOOR_MS` 2000, wrong-serve penalty fraction 0.35, lockout 600ms, combo step 1 tenth, combo range 10…30 tenths, base points 100, shift-clear bonus 500, `TICK_MS` 16, `MAX_FRAME_MS` 250, and the four-shift table of customer count (6/8/10/10), tier, patience and arrival gaps per §8.5.
-- [ ] `Object.isFrozen` holds for the exported object and for the shift table entries — asserted recursively.
-- [ ] `tierFor` is asserted at customers 1, N and N+1 of every shift: breakfast → 1; lunch → 2; tea → 2 at customer 5 and 3 at customer 6 (the R17-relevant split asserted at both sides of the boundary); supper → 3; and the Endless case `tierFor(3, 11) === 3`.
-- [ ] `gapMsFor` implements §8.5's `gap(i) = start + (end − start) × (i − 1) / (N − 1)` and is asserted at i=1 and i=N for all four shifts (6000→4000, 5000→3000, 4000→2500, 3000→2000 ms), and at i=N+1 where it clamps to the end value; `gapMsFor(3, 11) === 2000` for the Endless floor-held case.
-- [ ] `patienceMsFor` returns constants 18000/16000/14000 for the first three shifts at i=1, N and N+1, and for supper implements the −200ms-per-customer decay with a 10000 floor: 12000 at i=1, 10200 at i=10, 10000 at i=11, and 10000 at i=25 — the Endless floor-held case.
-- [ ] A named test asserts §10.4's single-source rule: the shift-table values (18000, 16000, 14000, 12000, 6000, 5000, 4000, 3000, 2500, 2000) and the fraction 0.35 appear in no file under `src/` or `tests/` other than `src/game/config.ts` — test fixtures included.
-- [ ] `config.ts` reports 100% line coverage under the `perFile: true` threshold.
+- [x] `src/game/config.ts` exports one frozen object holding, at minimum: queue cap 3, hearts 3, `PATIENCE_FLOOR_MS` 2000, wrong-serve penalty fraction 0.35, lockout 600ms, combo step 1 tenth, combo range 10…30 tenths, base points 100, shift-clear bonus 500, `TICK_MS` 16, `MAX_FRAME_MS` 250, and the four-shift table of customer count (6/8/10/10), tier, patience and arrival gaps per §8.5.
+- [x] `Object.isFrozen` holds for the exported object and for the shift table entries — asserted recursively.
+- [x] `tierFor` is asserted at customers 1, N and N+1 of every shift: breakfast → 1; lunch → 2; tea → 2 at customer 5 and 3 at customer 6 (the R17-relevant split asserted at both sides of the boundary); supper → 3; and the Endless case `tierFor(3, 11) === 3`.
+- [x] `gapMsFor` implements §8.5's `gap(i) = start + (end − start) × (i − 1) / (N − 1)` and is asserted at i=1 and i=N for all four shifts (6000→4000, 5000→3000, 4000→2500, 3000→2000 ms), and at i=N+1 where it clamps to the end value; `gapMsFor(3, 11) === 2000` for the Endless floor-held case.
+- [x] `patienceMsFor` returns constants 18000/16000/14000 for the first three shifts at i=1, N and N+1, and for supper implements the −200ms-per-customer decay with a 10000 floor: 12000 at i=1, 10200 at i=10, 10000 at i=11, and 10000 at i=25 — the Endless floor-held case.
+- [x] A named test asserts §10.4's single-source rule: the shift-table values (18000, 16000, 14000, 12000, 6000, 5000, 4000, 3000, 2500, 2000) and the fraction 0.35 appear in no file under `src/` or `tests/` other than `src/game/config.ts` — test fixtures included.
+- [x] `config.ts` reports 100% line coverage under the `perFile: true` threshold.
 
 ### S3-3 — `src/game/view.ts` implemented for real per §10.5
 
@@ -322,26 +327,52 @@ committed golden fixtures.
 **Technical context:** M1a will extend `grammar.ts` and re-export through `view.ts`; it never rewrites what this story freezes. `moodFor` is the single place the patience ratio is computed — §9.6 forbids either track from re-deriving it.
 
 **Acceptance criteria:**
-- [ ] `src/game/view.ts` exports exactly six names — `formatOrder`, `isValidDrink`, `nonDefaultCount`, `moodFor`, `SLOT_ROW_LABELS`, `SLOT_VALUE_LABELS` — asserted by comparing the sorted keys of a namespace import to that list, so nothing leaks into the frozen surface.
-- [ ] `formatOrder` emits §7.2's canonical `Base → Milk → Sugar → Strength → Temperature → Vessel` order with defaults omitted, asserted verbatim against all five §7.2 examples plus §9.3's longest tier-3 order `Teh O kosong gao peng da bao`.
-- [ ] `isValidDrink` enforces §7.3 and nothing else: a sweep over all 288 raw combinations asserts exactly 240 true and 48 false, and asserts `ga-dai` with `condensed` is valid.
-- [ ] `nonDefaultCount` excludes base and returns 0..5; a histogram over the 240 valid drinks asserts §7.4's distribution exactly: `{0: 2, 1: 14, 2: 46, 3: 82, 4: 72, 5: 24}`.
-- [ ] `moodFor` implements §9.6's half-open bands and is unit-tested at exactly `p = 0.60 → 'impatient'` and `p = 0.30 → 'angry'` — both boundaries to the lower band — plus `p = 0.601 → 'calm'` and `patienceMs = 0 → 'angry'`.
-- [ ] `moodFor` with `maxPatienceMs <= 0` returns `'angry'` rather than producing `NaN`; the behaviour is asserted by a test and the ruling is recorded in `docs/sprint.md` per §13's never-ask instruction.
-- [ ] `SLOT_ROW_LABELS` is a `Record<keyof Drink, string>` holding exactly the §9.5 wireframe row labels `BASE`, `MILK`, `SUGAR`, `BREW`, `TEMP`, `TAKE`.
-- [ ] `SLOT_VALUE_LABELS` covers all 16 slot values (2+3+4+3+2+2); a test iterates every slot union and asserts a non-empty, within-slot-unique label exists for each, and that §7.1's spoken forms are used where one exists — `C`, `O`, `siew dai`, `ga dai`, `kosong`, `gao`, `po`, `peng`, `da bao`.
-- [ ] `view.ts` imports nothing from `engine.ts`, React or the DOM — Sprint 7's boundary rule is written against exactly this shape and must be green over it once it lands — and reports 100% line coverage.
-- [ ] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
+- [x] `src/game/view.ts` exports exactly six names — `formatOrder`, `isValidDrink`, `nonDefaultCount`, `moodFor`, `SLOT_ROW_LABELS`, `SLOT_VALUE_LABELS` — asserted by comparing the sorted keys of a namespace import to that list, so nothing leaks into the frozen surface.
+- [x] `formatOrder` emits §7.2's canonical `Base → Milk → Sugar → Strength → Temperature → Vessel` order with defaults omitted, asserted verbatim against all five §7.2 examples plus §9.3's longest tier-3 order `Teh O kosong gao peng da bao`.
+- [x] `isValidDrink` enforces §7.3 and nothing else: a sweep over all 288 raw combinations asserts exactly 240 true and 48 false, and asserts `ga-dai` with `condensed` is valid.
+- [x] `nonDefaultCount` excludes base and returns 0..5; a histogram over the 240 valid drinks asserts §7.4's distribution exactly: `{0: 2, 1: 14, 2: 46, 3: 82, 4: 72, 5: 24}`.
+- [x] `moodFor` implements §9.6's half-open bands and is unit-tested at exactly `p = 0.60 → 'impatient'` and `p = 0.30 → 'angry'` — both boundaries to the lower band — plus `p = 0.601 → 'calm'` and `patienceMs = 0 → 'angry'`.
+- [x] `moodFor` with `maxPatienceMs <= 0` returns `'angry'` rather than producing `NaN`; the behaviour is asserted by a test and by the doc comment, and the ruling is recorded under **Rulings recorded here** above per §13's never-ask instruction. *(PF-5, drained at the Sprint 3 sync — `docs/sprint.md` is controller-owned and outside this sprint's `Touches:`.)*
+- [x] `SLOT_ROW_LABELS` is a `Record<keyof Drink, string>` holding exactly the §9.5 wireframe row labels `BASE`, `MILK`, `SUGAR`, `BREW`, `TEMP`, `TAKE`.
+- [x] `SLOT_VALUE_LABELS` covers all 16 slot values (2+3+4+3+2+2); a test iterates every slot union and asserts a non-empty, within-slot-unique label exists for each, and that §7.1's spoken forms are used where one exists — `C`, `O`, `siew dai`, `ga dai`, `kosong`, `gao`, `po`, `peng`, `da bao`.
+- [x] `view.ts` imports nothing from `engine.ts`, React or the DOM — Sprint 7's boundary rule is written against exactly this shape and must be green over it once it lands — and reports 100% line coverage.
+- [x] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
 
 ### S3-4 — `src/game/engine.ts` signatures with NotImplemented bodies
 
 *As a Track A agent, I want the three signatures already committed and typechecked, so that M1a fills bodies rather than negotiating shapes.*
 
 **Acceptance criteria:**
-- [ ] `src/game/engine.ts` exports exactly three names with §10.3's signatures: `createInitialState(mode: Mode, seed: number): GameState`, `tick(state: GameState, dtMs: number): GameState`, `applyAction(state: GameState, action: Action): GameState` — export surface asserted against that exact list.
-- [ ] Each body throws an `Error` whose message contains `NotImplemented` and the M1a story ID that will implement it, so the stub can never be mistaken for a working engine.
-- [ ] A unit test asserts all three throw with a message matching `/NotImplemented/`, which also keeps `engine.ts` at 100% line coverage under the `perFile` threshold from this sprint onward.
-- [ ] `npm run typecheck` is green with the signatures referenced from `src/app/EngineContext.tsx`.
+- [x] `src/game/engine.ts` exports exactly three names with §10.3's signatures: `createInitialState(mode: Mode, seed: number): GameState`, `tick(state: GameState, dtMs: number): GameState`, `applyAction(state: GameState, action: Action): GameState` — export surface asserted against that exact list.
+- [x] Each body throws an `Error` whose message contains `NotImplemented` and the M1a story ID that will implement it, so the stub can never be mistaken for a working engine.
+- [x] A unit test asserts all three throw with a message matching `/NotImplemented/`, which also keeps `engine.ts` at 100% line coverage under the `perFile` threshold from this sprint onward.
+- [x] `npm run typecheck` is green over the three signatures as committed. *(PF-4, drained at the Sprint 3 sync: `src/app/EngineContext.tsx` is Sprint 13's sole `Touches:` entry, and S13-1 already requires the typecheck to stay green with the signatures referenced from it.)*
+
+---
+
+## Sprint 3.1 — The single-source scan's scope ruling [NOT STARTED]
+
+**Goal:** Amend `tests/contract/config-single-source.test.ts` so that the §10.4 scan it enforces can coexist with the fixtures and timeouts later sprints are required to commit — `tests/contract/**` is frozen to Sprint 3 and no later sprint may edit it, so the amendment needs its own home.
+
+**Track:** M0 fan
+**Estimate:** 1h augmented
+**Dependencies:** Sprint 3
+**Touches:** `tests/contract/**`
+
+**Technical context:** Sprint 3's scan derives its banned list from `CONFIG` and reds any tracked file under `src/` or `tests/` that restates one of `{18000, 16000, 14000, 12000, 10000, 6000, 5000, 4000, 3000, 2500, 2000, 0.35}`. Two later requirements collide with it head-on. S47-1 mandates `tests/fixtures/daily-2026-08-28.json`, whose 34 `patienceMs` entries are *drawn from* `patienceMsFor` and so are literally `18000`, `16000`, `14000`, `12000` and `10000` — the reviewer confirmed empirically that staging such a file produces `AssertionError: 18000 is a §8 tuning value`. And every round-number millisecond timeout is banned, so a Playwright `timeout: 5000` anywhere under `tests/e2e/**` reds the contract suite from a file its own sprint cannot touch.
+
+**Ruling (PF-1, per §13's never-ask instruction):** §10.4's "including test fixtures" bans a fixture *restating* a §8 value by hand as a second source of truth. A golden fixture generated by folding `config.ts` through the engine is not a second source — it is an output of the first one, and it is regenerated whenever the values change, which is exactly the property §10.4 exists to protect. Generated goldens under `tests/fixtures/**` are therefore exempt, and the scan narrows to `.ts`/`.tsx` files. Timeouts remain in scope: a test needing a literal duration must either read it from `config.ts` or pick a value outside the banned set (`5500`, not `5000`) — a one-character cost that keeps the scan sharp everywhere it can still bite.
+
+### S3.1-1 — Exempt generated goldens and narrow the scan to source files
+
+*As the Sprint 47 implementer, I want the single-source scan to accept the golden day fixture my story is required to commit, so that a plan contradiction does not cost me a sprint I have no legal file to fix it from.*
+
+**Acceptance criteria:**
+- [ ] `tests/contract/config-single-source.test.ts` scans only `.ts` and `.tsx` files from `git ls-files src tests`, and skips `tests/fixtures/**` entirely. The exemption and its reasoning (a generated golden is an output of `config.ts`, not a second source) are recorded in a comment on the scan naming §10.4 and this sprint.
+- [ ] The derived banned list is unchanged — still `patienceMs`, `gapStartMs`, `gapEndMs`, `patienceFloorMs` and the penalty fraction read off `CONFIG`, still 12 values — and the existing vacuity guard (each value still found *in* `config.ts`) still passes.
+- [ ] A test proves the exemption is scoped, not blanket: a temporary `tests/fixtures/tmp-golden.json` containing `"patienceMs":18000` does **not** red the scan, while the same literal planted in a `.ts` file under `tests/` or `src/` still does. Both directions asserted by the test itself writing and deleting the probe, never by a committed file.
+- [ ] A comment on `TUNING_VALUES` records the two deliberate limits of the scan so neither is re-litigated: the non-shift scalars (`3`, `16`, `100`, `600`) are out of scope because they collide with ordinary array lengths and loop bounds, and literal timeouts must avoid the banned set rather than being exempted.
+- [ ] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
 
 ---
 
@@ -527,6 +558,8 @@ committed golden fixtures.
 *As the implementing agent, I want the coverage threshold specified rather than inferred, so that `src/game/`'s 100% promise fails the run instead of being reviewed by eye.*
 
 **Technical context:** §10.7 pins the config exactly; the two traps are `tests/e2e/**` being collected by Vitest (Playwright specs then fail as unit tests) and `src/dev/**` counting against the threshold even though an M2 story deletes it. This sprint is a substitution over S1-2's minimal config, not an addition — it depends on Sprint 3 so the `perFile` threshold is proven against real files rather than an empty directory. It also depends on Sprint 6, which is what puts a real `*.spec.ts` under `tests/e2e/` and replaces `scripts/e2e.mjs`'s placeholder: committing a spec here instead would trip S1-1's refuse-to-pass guard, and neither `scripts/e2e.mjs` nor `tests/e2e/**` is in this sprint's `Touches:`. Sprint 6 is in Sprint 1's fan, so this edge costs no wall-clock. *(PF-1, drained at the Sprint 1 sync.)*
+
+**Heads-up from the Sprint 3 review (PF-7):** run under §10.7's exact settings today, the v8 text report emits a row for `config.ts` only — `view.ts` and `engine.ts` do not appear, and the totals (48 statements) account for `config.ts` alone. A `perFile: true` threshold can therefore pass without ever having measured two of the three files it exists to hold. S8-1's "prove the threshold bites" criterion is the one that catches this, and the `view.ts` half of it is the half likely to surprise — do that mutation against `view.ts` specifically, not just `config.ts`. Note also that Sprint 3's NB-4 guard clause (`config.ts:159`) costs a statement and a branch but no line, so the line threshold of 100 still holds as specified.
 
 **Acceptance criteria:**
 - [ ] Coverage config matches §10.7 exactly: provider `v8`, `all: true`, `include: ['src/game/**/*.ts']`, `exclude` containing `'src/game/types.ts'`, `perFile: true`, `autoUpdate: false`, and line threshold `100`.
@@ -916,6 +949,8 @@ committed golden fixtures.
 
 **Technical context:** Two readings had to be ruled and recorded. First, `gapMsFor(shift, i)` is the wait *preceding* customer `i`, so after spawning customer `i` the engine sets `nextArrivalMs = gapMsFor(shift, i + 1)` and R11 makes customer 1's wait zero. Second, R10 suspension means the countdown *holds*: while the queue is full, `nextArrivalMs` is not decremented at all, matching §8.7's "arrivals pause until a slot frees" and preventing a freed slot from dumping a backlog.
 
+**Ruling R-S3-b applies here (PF-6, drained at the Sprint 3 sync):** within Endless, `customerIndex` accumulates across supper repeats and is never reset — customer 11 of Endless is `gapMsFor(3, 11)`, customer 25 is `gapMsFor(3, 25)`, and there is no per-repeat restart. Only that reading makes §8.5's "held at their floors — 2.0s and 10.0s, constant" true; under a reset the first customer of each repeat would get the shift's *start* values (3000ms gap, 12000ms patience). §8.5's "each repeat is its own shift for break and bonus purposes" governs break and bonus only. `config.ts`'s selectors deliberately bake in neither reading and `tests/contract/config.test.ts` pins both, so this sprint is where the convention is actually chosen — assert it explicitly.
+
 **Acceptance criteria:**
 - [ ] `src/game/queue.ts` exists, imports only `types.ts`, `config.ts`,
       `generator.ts`, `rng.ts` and `scoring.ts`, and contains no DOM or React
@@ -1092,6 +1127,8 @@ committed golden fixtures.
 
 **Technical context:** §10.3's identity clause and R20's carry conflict at sub-step deltas — the remainder must be stored, so the reference cannot be literally identical. Ruled and recorded: identity is returned when `phase !== 'playing'` or `dtMs === 0`; a sub-step delta returns a state differing only in `tickRemainderMs`, with `builder`, every `Customer`, `shiftResults` and the shared frozen empty `frameEvents` all identity-preserved. That is what §10.3's own stated assertion checks and what the render budget needs.
 
+**Ruling R-S3-b applies here too (PF-6):** the `customerIndex` the reducer feeds the three selectors accumulates across Endless supper repeats and is never reset. See Sprint 18's context for the reasoning; the reducer and the queue helpers must agree or the ramp restarts every repeat.
+
 **Acceptance criteria:**
 - [ ] `src/game/engine.ts` exports `tick`, `applyAction` and `createInitialState`
       with the exact §10.3 signatures.
@@ -1259,6 +1296,8 @@ committed golden fixtures.
 *As a player, I want to set each of the six drink slots with a single tap, so that I can build an order faster than I can read it.*
 
 **Technical context:** Row order, row labels and value labels all come from `SLOT_ROW_LABELS` and `SLOT_VALUE_LABELS` in the frozen view barrel (§10.5). Restating any of them as a literal in the component would let the two tracks disagree silently, so the tests grep for that. R18 is the trap here: the two condensed-milk-invalid sugar buttons must stay live and tappable, marked but never disabled.
+
+**Expect the rendered rows not to match §9.5's ASCII exactly, and do not re-litigate it.** The frozen `SLOT_VALUE_LABELS` use words where the §9.5 wireframe draws `●` for a default, and the full spoken forms `siew dai` / `ga dai` where the wireframe abbreviates to `siew` / `ga`. That is deliberate: §9.2 forbids meaning carried by glyph alone, this story requires a non-empty accessible name per button, and `formatOrder` needs the full forms anyway. Since this story also bans restating label literals, the full forms are what will render. *(Noted at the Sprint 3 sync.)*
 
 **Acceptance criteria:**
 - [ ] `src/components/SlotSelectors.tsx` and `SlotSelectors.module.css` exist and take
@@ -2159,7 +2198,7 @@ committed golden fixtures.
 
 **Track:** M3
 **Estimate:** 5h augmented
-**Dependencies:** Sprint 20, Sprint 22
+**Dependencies:** Sprint 3.1, Sprint 20, Sprint 22
 **Touches:** `tests/fixtures/daily-run.json`, `tests/game/daily-run.test.ts`
 
 ### S47-1 — The 34-customer Daily and its golden fixture
@@ -2167,6 +2206,8 @@ committed golden fixtures.
 *As Ah Seng, I want the Daily to give everyone the same 34 orders and end at the day's end so that comparing scores in the group chat is fair.*
 
 **Technical context:** R24 is a *departure* condition, not a spawn condition — the run ends when the 34th customer leaves the queue, so it fires inside step (5) of R21's pipeline after R16's game-over check has already had its say (R23). The +500 shift-clear bonus still evaluates for supper, then `phase` goes straight to `gameover` and never through `break`. Endless shares the same step and must not terminate there.
+
+**Why the Sprint 3.1 edge exists (PF-1):** the golden fixture's `patienceMs` entries are folded straight out of `patienceMsFor`, so they *are* `18000`, `16000`, `14000`, `12000` and `10000` — five of the values Sprint 3's `config-single-source.test.ts` bans from every tracked file, JSON included. Without Sprint 3.1's exemption for generated goldens under `tests/fixtures/**`, committing the fixture this story requires turns the contract suite red from a file frozen to Sprint 3 that this sprint may not edit.
 
 **Acceptance criteria:**
 - [ ] Daily composition is derived, not restated: the total is computed by summing `config`'s per-shift customer counts and asserted to equal 34, with the per-shift breakdown asserted as `[6, 8, 10, 10]` read from `config` (§10.4 forbids §8 literals outside `config.ts`, fixtures included).
@@ -2435,6 +2476,13 @@ inside a pull request. Append here; do not fix in place mid-sprint.
 | Sprint 5 (PR #4, cycle 1) | **PF-9** — `--step-*` are absolute `px`, so type does not scale with a browser font-size preference, a §9.7 accessibility consideration. S5-1 mandated px explicitly, so Sprint 5 is correct as specified. | PRD §9.3 / §9.7 | **OPEN — human decision.** This is a PRD question, not a sprint defect: switching to `rem` changes §9.3's published scale and the parsing assertions that read it. Recorded as a Question below rather than drained, because the standing instructions forbid an agent widening PRD scope. |
 | Sprint 2 (PR #2, cycle 3) | **PF-10** — `tests/scaffold/lint-config.test.ts` writes `tests/scaffold/lint-probe.<pid>.ts` into the working tree and removes it in a `finally`. A hard kill mid-run leaves the probe behind, where it reds `npm run lint`, `prettier --check .` and `git status` until deleted by hand. Adding `lint-probe.*` to `.gitignore` and `.prettierignore` makes the leftover inert, but neither file is in Sprint 2's `Touches:` and no sprint after Sprint 1 declared either. | Sprint 54 | **CLOSED** — drained at this sync. `.gitignore` and `.prettierignore` added to Sprint 54's `Touches:`, with the one-line-each fix as a criterion under S54-1 and a `Sprint 2` dependency edge so the sprint that writes the probes lands first. Sprint 2 is already DONE, so the edge costs no wall-clock. Note this is the hard-kill case only — the primary fix, making probe bodies Prettier-clean, shipped inside PR #2. |
 | Sprint 2 (PR #2, cycles 1 & 3) | **PF-11** — S7-3 commits four deliberately-illegal `.ts` fixtures under `tests/lint/fixtures/` and requires `npm run lint` to stay green. `tsconfig.json` excludes that directory, so Sprint 2's type-aware `projectService` block reports a parsing error on any real `.ts` file there — but the obvious workaround, adding the directory to `ignores`, would make all four fixtures lint clean and prove nothing, defeating the story. S7-3 named neither hazard. | Sprint 7 | **CLOSED** — drained at this sync. S7-3's exclusion criterion now states the mechanism explicitly: a non-type-checked flat-config override for the `tests/lint/fixtures/` glob, never an `ignores` entry, so the boundary and purity rules still fire on the fixtures. Sprint 7 already owns `eslint.config.js`; `Touches:` unchanged. |
+| Sprint 3 (PR #5) | **PF-1 (Sprint 3 review)** — `tests/contract/config-single-source.test.ts` bans the twelve derived §8 values from every tracked file under `src/` and `tests/`, JSON included. S47-1 mandates `tests/fixtures/daily-2026-08-28.json`, whose 34 `patienceMs` entries are folded out of `patienceMsFor` and so literally carry 18000/16000/14000/12000/10000; the reviewer reproduced the red empirically. The same trap catches any round-number millisecond timeout (2000/3000/4000/5000/6000) in a later `tests/e2e/**` spec. `tests/contract/**` is frozen to Sprint 3, so no later sprint may amend the scan. | Sprint 47, and any sprint writing a literal timeout | **CLOSED** — drained at this sync. **Ruled** under §13's never-ask instruction: a golden generated by folding `config.ts` is an output of the single source, not a second one, so generated goldens under `tests/fixtures/**` are exempt and the scan narrows to `.ts`/`.tsx`; literal timeouts stay in scope and must avoid the banned set (`5500`, not `5000`). New **Sprint 3.1** declares `tests/contract/**` and carries S3.1-1; Sprint 47 gains a `Sprint 3.1` dependency edge. |
+| Sprint 3 (PR #5) | **PF-2 (Sprint 3 review)** — S3-1 said `GameState` "with all twenty fields"; §10.3 lists 22, and the implementation plus its `keyof GameState` assertion both use 22. The PRD was followed; the sprint text was the error. | Sprint 3 | **CLOSED** — drained at this sync. S3-1 now reads "`GameState` with all 22 fields". No code or PRD change. |
+| Sprint 3 (PR #5) | **PF-3 (Sprint 3 review)** — S3-1's final AC required Vitest typechecking enabled and `types.ts` in the coverage `exclude`, both of which live in `vitest.config.ts` — Sprint 8's sole `Touches:` entry and outside Sprint 3's. | Sprint 3, Sprint 8 | **CLOSED** — drained at this sync. The AC is re-pointed at what Sprint 3 can own and does hold: the `expectTypeOf` assertions live in ordinary `*.test.ts` files, so `tsc --noEmit` reds on a broken one today (mutation-verified). S8-1 already carries both halves; no new criteria needed. |
+| Sprint 3 (PR #5) | **PF-4 (Sprint 3 review)** — S3-4's final AC required typecheck green "with the signatures referenced from `src/app/EngineContext.tsx`", which is Sprint 13's sole `Touches:` entry. | Sprint 3, Sprint 13 | **CLOSED** — drained at this sync. The AC now reads "green over the three signatures as committed"; S13-1 already owns the referenced-from-EngineContext half. |
+| Sprint 3 (PR #5) | **PF-5 (Sprint 3 review)** — S3-3 required the `moodFor(maxPatienceMs <= 0) -> 'angry'` ruling to be written into `docs/sprint.md`, which is controller-owned and outside any implementation sprint's `Touches:`. The ruling shipped in the doc comment and the tests. | Sprint 3 | **CLOSED** — drained at this sync. Recorded as **R-S3-a** under Sprint 3's new *Rulings recorded here* block; the AC now points at it. |
+| Sprint 3 (PR #5) | **PF-6 (Sprint 3 review)** — §8.5 pins Endless's `shiftIndex` but says nothing about the customer index, and the two readings diverge: only a cumulative index makes "held at their floors" true, while §8.5's "each repeat is its own shift" nudges an implementer toward a reset. `config.ts`'s signatures are pinned to `(shiftIndex, customerIndex)` so it cannot be fixed by adding a parameter; the selectors bake in neither reading and tests pin both. | Sprint 18, Sprint 21 | **CLOSED** — drained at this sync. **Ruled** as **R-S3-b**: within Endless, `customerIndex` accumulates across supper repeats and is never reset; "each repeat is its own shift" governs break and bonus only. Recorded in Sprint 3's rulings block and restated in the technical context of both Sprint 18 and Sprint 21, which are the sprints that actually choose the convention. |
+| Sprint 3 (PR #5, cycle 2) | **PF-7 (Sprint 3 review)** — under §10.7's exact coverage settings the v8 text report emits a row for `config.ts` only; `view.ts` and `engine.ts` never appear and the totals account for `config.ts` alone, so a `perFile: true` threshold could pass without measuring two of the three files it exists to hold. Not actionable in Sprint 3, which does not own `vitest.config.ts`. | Sprint 8 | **CLOSED** — drained at this sync. Added to Sprint 8's technical context as a heads-up: S8-1's existing "prove the threshold bites" criterion is the right catch, and the mutation must be run against `view.ts` specifically. Also recorded there that Sprint 3's NB-4 guard costs a statement and a branch but no line, so the line threshold of 100 still holds. |
 
 ### Questions — need a human answer
 
