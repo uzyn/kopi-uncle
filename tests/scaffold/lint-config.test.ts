@@ -63,6 +63,11 @@ const LINT_RUN_TIMEOUT_MS = 120_000;
  *
  * `tests/scaffold/` is deliberate — it is neither `src/` nor a directory the
  * config names, so a probe caught here also shows the run covers the whole tree.
+ *
+ * `contents` must itself be Prettier-clean. The probe is briefly a real file in
+ * the tree, and `prettier --check .` runs from a sibling test file that Vitest is
+ * free to schedule in parallel — a probe that breaks formatting would fail that
+ * run intermittently, for a reason having nothing to do with either test.
  */
 function lintWithProbe(contents: string): ReturnType<typeof npmRun> {
   const probe = join(ROOT, 'tests', 'scaffold', `lint-probe.${process.pid}.ts`);
@@ -176,7 +181,7 @@ describe('the lint gate', () => {
       // the config is configured to `warn`, which is exactly why the only honest
       // way to test `--max-warnings 0` is to produce a warning and nothing else.
       const result = lintWithProbe(
-        '/* eslint no-console: "warn" */\nexport const probe = () => console.log("probe");\n',
+        '/* eslint no-console: "warn" */\nexport const probe = () => console.log(\'probe\');\n',
       );
       expect(
         result.status,
