@@ -465,7 +465,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 7 — Boundary and purity lint [NOT STARTED]
+## Sprint 7 — Boundary and purity lint [IN PROGRESS]
 
 **Goal:** Make §10.5's seam and §3's no-wall-clock rule mechanically unbreakable before either track writes logic against them.
 
