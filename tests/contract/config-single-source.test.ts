@@ -17,7 +17,12 @@ const SINGLE_SOURCE = 'src/game/config.ts';
  */
 const TUNING_VALUES: readonly number[] = [
   ...new Set([
-    ...CONFIG.SHIFTS.flatMap((shift) => [shift.patienceMs, shift.gapStartMs, shift.gapEndMs]),
+    ...CONFIG.SHIFTS.flatMap((shift) => [
+      shift.patienceMs,
+      shift.patienceFloorMs,
+      shift.gapStartMs,
+      shift.gapEndMs,
+    ]),
     CONFIG.WRONG_SERVE_PENALTY_FRACTION,
   ]),
 ];

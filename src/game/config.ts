@@ -138,19 +138,37 @@ export function tierFor(shiftIndex: number, customerIndex: number): Tier {
 
 /**
  * §8.5 — `gap(i) = start + (end − start) × (i − 1) / (N − 1)`, in integer
- * milliseconds (R20). Past the shift's customer count the gap holds at its
- * floor, which is Endless's repeating supper.
+ * milliseconds (R20). `customerIndex` is clamped to `[1, N]`, so an index past
+ * the shift's customer count holds at `gapEndMs`.
+ *
+ * A one-customer shift has no interpolation to do; it returns `gapStartMs`
+ * rather than dividing by zero, so retuning `customers` down to 1 stays a
+ * value change and never a seam break (§10.4).
+ *
+ * Endless (§8.5) pins `shiftIndex` at supper but says nothing about how the
+ * caller indexes customers across the repeat. Sprints 18/21 own that choice
+ * and the two readings differ here: a *continuing* index (11, 12, …) is
+ * clamped to N and holds at `gapEndMs`; an index that *resets* to 1 each
+ * repeat replays supper's ramp from `gapStartMs`. This selector is correct
+ * under either, but callers must not assume the floor.
  */
 export function gapMsFor(shiftIndex: number, customerIndex: number): number {
   const shift = shiftFor(shiftIndex);
   const i = clamp(customerIndex, 1, shift.customers);
+  const steps = shift.customers - 1;
+  if (steps <= 0) return shift.gapStartMs;
   const span = shift.gapEndMs - shift.gapStartMs;
-  return Math.round(shift.gapStartMs + (span * (i - 1)) / (shift.customers - 1));
+  return Math.round(shift.gapStartMs + (span * (i - 1)) / steps);
 }
 
 /**
  * §8.5 — constant within a shift, except supper, which steps down per customer
- * to its floor. The floor is what Endless holds patience at.
+ * to `patienceFloorMs`.
+ *
+ * As with `gapMsFor`, what Endless does depends on how Sprints 18/21 index
+ * customers across the repeat: a continuing index keeps decaying and settles
+ * on the floor, while an index that resets to 1 replays supper's decay from
+ * `patienceMs`. Neither reading is baked in here.
  */
 export function patienceMsFor(shiftIndex: number, customerIndex: number): number {
   const shift = shiftFor(shiftIndex);

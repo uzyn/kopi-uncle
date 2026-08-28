@@ -6,7 +6,7 @@
  * ever added to `Action` without being listed below, `Exclude` stops collapsing
  * to `never` and this file fails `npm run typecheck`.
  *
- * The module is deliberately never imported at runtime — `types-exhaustive.test.ts`
+ * The module is deliberately never imported at runtime — `types.test.ts`
  * asserts its text instead. It is a type declaration, not a statement that runs.
  */
 

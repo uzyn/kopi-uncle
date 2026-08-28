@@ -7,8 +7,8 @@ import { CONFIG, gapMsFor, patienceMsFor, tierFor } from '../../src/game/config'
  * included, so the expectations below read their operands from `CONFIG` rather
  * than repeating the shift table. What is under test is the three *formulas*,
  * which live in the selectors and nowhere else — the arithmetic constants that
- * are properties of those formulas (a decay over nine customers, a linear
- * midpoint) are stated here because they are not §8 table values.
+ * are properties of those formulas (a linear midpoint, a decay over `N − 1`
+ * steps) are derived here because they are not §8 table values.
  */
 
 const [BREAKFAST, LUNCH, TEA, SUPPER] = CONFIG.SHIFTS;
@@ -126,9 +126,28 @@ describe('§8.5 — gapMsFor', () => {
     }
   });
 
-  it('holds the gap at the supper floor for the Endless repeat', () => {
+  // Endless pins `shiftIndex` at supper (§8.5) but leaves the customer-index
+  // convention to Sprints 18/21. Both readings are pinned here so neither can
+  // change without this test noticing.
+  it('pins any shift index past the table at supper, under a continuing customer index', () => {
     expect(gapMsFor(ENDLESS_SHIFT_INDEX, SUPPER.customers + 1)).toBe(SUPPER.gapEndMs);
     expect(gapMsFor(ENDLESS_SHIFT_INDEX + 7, 40)).toBe(SUPPER.gapEndMs);
+  });
+
+  it('replays supper from gapStartMs under a customer index that resets each repeat', () => {
+    expect(gapMsFor(ENDLESS_SHIFT_INDEX + 7, 1)).toBe(SUPPER.gapStartMs);
+  });
+
+  it('never returns NaN, however the shift table is retuned (§10.4)', () => {
+    // `gap(i)` divides by `N − 1`, so a shift retuned to one customer would
+    // divide by zero; the selector short-circuits to `gapStartMs` instead. No
+    // shift is one-customer today, so this sweeps the table for the general
+    // invariant a value change must never break.
+    for (let index = -2; index < CONFIG.SHIFTS.length + 2; index += 1) {
+      for (let i = -1; i <= 40; i += 1) {
+        expect(Number.isFinite(gapMsFor(index, i))).toBe(true);
+      }
+    }
   });
 });
 
@@ -147,15 +166,19 @@ describe('§8.5 — patienceMsFor', () => {
   it('decays supper per customer down to its floor', () => {
     const n = SUPPER.customers;
     expect(patienceMsFor(3, 1)).toBe(SUPPER.patienceMs);
-    expect(patienceMsFor(3, n)).toBe(SUPPER.patienceMs - SUPPER.patienceDecayPerCustomerMs * 9);
-    expect(patienceMsFor(3, n)).toBe(10200);
+    expect(patienceMsFor(3, n)).toBe(
+      SUPPER.patienceMs - SUPPER.patienceDecayPerCustomerMs * (n - 1),
+    );
     expect(patienceMsFor(3, n + 1)).toBe(SUPPER.patienceFloorMs);
-    expect(patienceMsFor(3, n + 1)).toBe(10000);
   });
 
-  it('holds patience at the supper floor for the Endless repeat', () => {
+  it('settles on the supper floor under a continuing customer index', () => {
     expect(patienceMsFor(ENDLESS_SHIFT_INDEX, 25)).toBe(SUPPER.patienceFloorMs);
     expect(patienceMsFor(ENDLESS_SHIFT_INDEX + 3, 25)).toBe(SUPPER.patienceFloorMs);
+  });
+
+  it('replays supper from patienceMs under a customer index that resets each repeat', () => {
+    expect(patienceMsFor(ENDLESS_SHIFT_INDEX + 3, 1)).toBe(SUPPER.patienceMs);
   });
 
   it('never returns less than the shift floor, and never more than customer 1', () => {

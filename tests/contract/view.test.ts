@@ -32,6 +32,16 @@ function drink(overrides: Partial<Drink>): Drink {
   return { ...PLAIN_KOPI, ...overrides };
 }
 
+/**
+ * Every specifier form TypeScript accepts: static `from`, side-effect
+ * `import '…'`, dynamic `import(…)` and `require(…)`, in either quote style.
+ * A double-quoted or dynamic import must not slip past the §10.5 boundary.
+ */
+function specifiersIn(source: string): string[] {
+  const pattern = /(?:\bfrom|\bimport|\brequire)\s*\(?\s*(?:'([^']*)'|"([^"]*)")/g;
+  return [...source.matchAll(pattern)].map((match) => match[1] ?? match[2]);
+}
+
 describe('§10.5 — the frozen export surface', () => {
   it('exports exactly the six names the seam names, and nothing more', () => {
     expect(Object.keys(view).sort()).toEqual(
@@ -47,10 +57,17 @@ describe('§10.5 — the frozen export surface', () => {
   });
 
   it('imports nothing from the engine, React or the DOM', () => {
-    const imports = [...VIEW_SOURCE.matchAll(/from\s+'([^']+)'/g)].map((match) => match[1]);
+    const imports = specifiersIn(VIEW_SOURCE);
     expect(imports).toEqual(['./types']);
     expect(VIEW_SOURCE).toMatch(/import type \{[^}]*\} from '\.\/types'/);
     expect(VIEW_SOURCE).not.toMatch(/\b(document|window|globalThis)\b/);
+  });
+
+  it('the boundary scan catches double-quoted, side-effect and dynamic imports', () => {
+    expect(specifiersIn(`import type { A } from "./engine";`)).toEqual(['./engine']);
+    expect(specifiersIn(`import "react";`)).toEqual(['react']);
+    expect(specifiersIn(`const m = await import('./engine');`)).toEqual(['./engine']);
+    expect(specifiersIn(`const m = require("react-dom");`)).toEqual(['react-dom']);
   });
 });
 
