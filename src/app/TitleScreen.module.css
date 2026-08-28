@@ -1,9 +1,15 @@
 /*
- * The two colour literals below are PRD §9.2's teak-on-cream pair (11.44:1),
- * the only approved pairing for body text. S5-1 (Sprint 5 — design tokens)
- * replaces them with var(--teak) / var(--condensed-cream) once
- * src/styles/tokens.css lands; the contrast test resolves either form.
+ * PRD §9.2 — the colours below resolve through src/styles/tokens.css; no hex
+ * literal survives here. `.screen` is teak on condensed cream, the 11.44:1 pair
+ * the matrix approves for body text.
+ *
+ * The tokens are pulled in from this stylesheet because it is the only one the
+ * running app currently loads. When a sprint owns `src/main.tsx` it should
+ * import `src/styles/tokens.css` there instead, as a single global sheet, and
+ * drop the @import below.
  */
+@import '../styles/tokens.css';
+
 .screen {
   display: flex;
   flex-direction: column;
@@ -12,32 +18,30 @@
   gap: 0.75rem;
   min-height: 100vh;
   padding: 2rem 1rem;
-  background-color: #fff3d6;
-  color: #4a2c18;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  background-color: var(--condensed-cream);
+  color: var(--teak);
+  font-family: var(--font-body);
+  font-size: var(--step-16);
   text-align: center;
 }
 
 .wordmark {
   margin: 0;
-  font-family: 'Arial Narrow', system-ui, sans-serif;
-  font-size: 3.5rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--step-64);
+  font-weight: 400;
   letter-spacing: 0.06em;
   line-height: 1;
 }
 
 .tagline {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--step-20);
   font-style: italic;
 }
 
 .scaffoldNote {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--step-14);
   opacity: 0.75;
 }
