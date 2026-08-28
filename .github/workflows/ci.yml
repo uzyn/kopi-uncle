@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Assert the gate has no escape hatches
         run: |
@@ -35,7 +35,7 @@ jobs:
           echo "No gate escape hatches under .github/workflows."
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .github/workflows/.nvmrc
           cache: 'npm'
@@ -58,7 +58,7 @@ jobs:
 
       - name: Restore the Playwright browser cache
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -156,7 +156,7 @@ jobs:
 
       - name: Upload failure artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gate-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
