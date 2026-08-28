@@ -345,7 +345,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 4 — The CI gate [NOT STARTED]
+## Sprint 4 — The CI gate [IN PROGRESS]
 
 **Goal:** Run the whole §10.7 gate on every push and pull request, so that "done" means the same thing for an agent as it does for a human.
 
