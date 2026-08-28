@@ -8,12 +8,24 @@ import { basePathFor } from './vite.config';
  * restated as a literal, which is what keeps the suite green under a fork, a
  * rename or a clone under any other name.
  */
-const BASE_PATH = basePathFor(process.env.GITHUB_REPOSITORY);
-
-/** Fixed and strict: a drifting port would let the suite test a stale server. */
 const PORT = 4173;
 const HOST = '127.0.0.1';
-const ORIGIN = `http://${HOST}:${PORT}`;
+
+/** Fixed and strict: `--strictPort` makes a taken port a hard failure rather
+ * than a silent hop to another one, which would leave `baseURL` pointing at
+ * nothing. Staleness is governed by `reuseExistingServer` below, not by this. */
+export const ORIGIN = `http://${HOST}:${PORT}`;
+
+/**
+ * The one place the runner's URL is assembled. Exported so the config spec can
+ * exercise it for a repository name other than the ambient one — otherwise its
+ * assertions collapse to `endsWith('/')` wherever `GITHUB_REPOSITORY` is unset.
+ */
+export function e2eBaseURLFor(githubRepository: string | undefined): string {
+  return `${ORIGIN}${basePathFor(githubRepository)}`;
+}
+
+const BASE_URL = e2eBaseURLFor(process.env.GITHUB_REPOSITORY);
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -22,7 +34,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {
-    baseURL: `${ORIGIN}${BASE_PATH}`,
+    baseURL: BASE_URL,
     trace: 'on-first-retry',
   },
   // Chromium only (PRD §10.7): `npx playwright install --with-deps chromium`
@@ -30,7 +42,11 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: `npm run build && npm run preview -- --host ${HOST} --port ${PORT} --strictPort`,
-    url: `${ORIGIN}${BASE_PATH}`,
+    url: BASE_URL,
+    // CI always builds and boots its own server. Locally the suite attaches to
+    // whatever already answers on this port — fast, but it does mean a stale
+    // `npm run preview` left running is what gets tested; kill it to force a
+    // fresh build.
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     stdout: 'pipe',
