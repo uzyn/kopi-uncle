@@ -1,7 +1,12 @@
 /*
- * PRD §9.2 — the colours below resolve through src/styles/tokens.css; no hex
- * literal survives here. `.screen` is teak on condensed cream, the 11.44:1 pair
- * the matrix approves for body text.
+ * PRD §9.2 — the colours below resolve through src/styles/tokens.css; no
+ * palette hex literal survives here. `.screen` is teak on condensed cream
+ * (11.44:1) and `.control` is #FFFFFF on kopitiam green (6.49:1), the two pairs
+ * the §9.2 matrix approves for this screen. #FFFFFF is the matrix's own
+ * literal, not a seventh palette colour.
+ *
+ * Nothing here animates or transitions (S12-1): the title runs no frame loop,
+ * so there is no motion for prefers-reduced-motion to have to switch off.
  *
  * The tokens are pulled in from this stylesheet because it is the only one the
  * running app currently loads. When a sprint owns `src/main.tsx` it should
@@ -11,6 +16,7 @@
 @import '../styles/tokens.css';
 
 .screen {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,6 +33,7 @@
 
 .wordmark {
   margin: 0;
+  color: var(--teak);
   font-family: var(--font-display);
   font-size: var(--step-64);
   font-weight: 400;
@@ -35,13 +42,67 @@
 }
 
 .tagline {
-  margin: 0;
+  margin: 0 0 1rem;
   font-size: var(--step-20);
   font-style: italic;
 }
 
-.scaffoldNote {
-  margin: 0;
-  font-size: var(--step-14);
-  opacity: 0.75;
+/*
+ * The column is capped rather than fixed, so a 360px viewport gets four
+ * full-bleed controls and a desktop gets a centred stack — never a row wider
+ * than the viewport (§9.5).
+ */
+.menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 20rem;
+}
+
+/*
+ * §9.7's floor: 44 × 44 CSS pixels, stated in both axes so neither a short
+ * label nor a tight line-height can shrink a target below it.
+ */
+.control {
+  box-sizing: border-box;
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid var(--teak);
+  border-radius: 0.5rem;
+  background-color: var(--kopitiam-green);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: var(--step-20);
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+/*
+ * Play leads on size and weight, not on colour — §9.2 forbids colour as the
+ * only carrier of a distinction.
+ */
+.primary {
+  padding: 1rem 1.25rem;
+  font-family: var(--font-display);
+  font-size: var(--step-28);
+  letter-spacing: 0.04em;
+}
+
+.control:focus-visible {
+  outline: 3px solid var(--teak);
+  outline-offset: 3px;
+}
+
+.control:hover {
+  border-color: var(--kaya-yellow);
+}
+
+.control:active {
+  border-color: var(--kaya-yellow);
+  transform: translateY(1px);
 }
