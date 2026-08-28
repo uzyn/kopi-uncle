@@ -636,7 +636,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 12 — Title screen [NOT STARTED]
+## Sprint 12 — Title screen [IN PROGRESS]
 
 **Goal:** Fill the title screen's registry slot from tokens alone, so `npm run dev` shows a real front door long before the game behind it exists.
 
