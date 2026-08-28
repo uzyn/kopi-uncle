@@ -46,6 +46,10 @@ export function screenFor(route: Route): ComponentType {
   return SCREEN_REGISTRY[route];
 }
 
+// SCRATCH: a deliberate type error proving the CI gate bites. Never merged.
+const deliberateTypeError: number = 'this is not a number';
+void deliberateTypeError;
+
 export default function App({ route = 'title' }: { route?: Route }) {
   const Screen = screenFor(route);
   return <Screen />;
