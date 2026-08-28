@@ -1,0 +1,38 @@
+/*
+ * PRD §9.2 (palette), §9.3 (typography) — the single place a colour, a type
+ * step or a font stack is written down. Every other stylesheet reaches these
+ * through var(); a §9.2 hex literal anywhere else under src/ is a test failure.
+ *
+ * PRD §3 constraint 3 — both faces are bundled from @fontsource as Latin
+ * subsets, never fetched from a CDN at runtime. Anton ships one weight; Nunito
+ * Sans is pulled at 400 and 700 only. All three files declare
+ * `font-display: swap`, so a slow face swaps in rather than blocking paint,
+ * and the metric-compatible fallbacks below keep that swap from shifting
+ * layout.
+ */
+@import '@fontsource/anton/latin-400.css';
+@import '@fontsource/nunito-sans/latin-400.css';
+@import '@fontsource/nunito-sans/latin-700.css';
+
+:root {
+  /* PRD §9.2 — the palette. Six values, no seventh. */
+  --kopitiam-green: #0e6b4f;
+  --tile-teal: #2a9d8f;
+  --kaya-yellow: #f4b93e;
+  --chilli-red: #d62828;
+  --condensed-cream: #fff3d6;
+  --teak: #4a2c18;
+
+  /* PRD §9.3 — the type scale. Active order text never drops below --step-28. */
+  --step-12: 12px;
+  --step-14: 14px;
+  --step-16: 16px;
+  --step-20: 20px;
+  --step-28: 28px;
+  --step-40: 40px;
+  --step-64: 64px;
+
+  /* PRD §9.3 — the two roles, each with its metric-compatible fallback. */
+  --font-display: 'Anton', 'Arial Narrow', system-ui, sans-serif;
+  --font-body: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+}
