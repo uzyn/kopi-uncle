@@ -251,7 +251,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 2 — ESLint 9, type-aware [IN PROGRESS]
+## Sprint 2 — ESLint 9, type-aware [DONE]
 
 **Goal:** Put a real, type-aware linter behind `npm run lint`, so that Sprint 7's boundary and purity rules have the analysis they need.
 
@@ -269,11 +269,11 @@ committed golden fixtures.
 **Technical context:** Prettier is wired as a formatter and `eslint-config-prettier` disables conflicting stylistic rules; `eslint-plugin-prettier` is deliberately not installed, because routing formatting through lint makes every reformat a gate failure with a stack trace attached.
 
 **Acceptance criteria:**
-- [ ] `eslint.config.js` exists at the repo root, exports a flat-config array, and ESLint `^9` is the installed major — asserted from `package-lock.json`.
-- [ ] typescript-eslint is configured type-aware: `npx eslint --print-config src/game/types.ts` shows a `projectService` or `project` parser option set, and shows `@typescript-eslint/no-floating-promises` at `error` — a rule that cannot exist without type information.
-- [ ] `eslint-plugin-react-hooks` contributes `react-hooks/rules-of-hooks` and `react-hooks/exhaustive-deps` at `error` for `src/components/**` and `src/app/**` — asserted via `--print-config`.
-- [ ] `eslint-config-prettier` is the last entry of the flat-config array; `npm ls eslint-plugin-prettier` exits non-zero, proving the plugin is absent.
-- [ ] `npm run lint` runs `eslint .` with `--max-warnings 0` and exits 0; `npm run format:check` runs `prettier --check .` and exits 0.
+- [x] `eslint.config.js` exists at the repo root, exports a flat-config array, and ESLint `^9` is the installed major — asserted from `package-lock.json`.
+- [x] typescript-eslint is configured type-aware: `npx eslint --print-config src/game/types.ts` shows a `projectService` or `project` parser option set, and shows `@typescript-eslint/no-floating-promises` at `error` — a rule that cannot exist without type information.
+- [x] `eslint-plugin-react-hooks` contributes `react-hooks/rules-of-hooks` and `react-hooks/exhaustive-deps` at `error` for `src/components/**` and `src/app/**` — asserted via `--print-config`.
+- [x] `eslint-config-prettier` is the last entry of the flat-config array; `npm ls eslint-plugin-prettier` exits non-zero, proving the plugin is absent.
+- [x] `npm run lint` runs `eslint .` with `--max-warnings 0` and exits 0; `npm run format:check` runs `prettier --check .` and exits 0.
 
 ---
 
@@ -508,7 +508,7 @@ committed golden fixtures.
 - [ ] `tests/lint/boundary.test.ts` constructs an `ESLint` instance against the project config and lints each fixture, asserting for each at least one message whose `ruleId` is exactly `no-restricted-imports` (fixtures 1–2) or `no-restricted-syntax` (fixtures 3–4) — the assertion is on the specific ruleId, never on the error count alone.
 - [ ] The same test asserts fixture 3 produces three distinct violations, one per banned member expression, so a selector that catches only `Date.now` fails the test.
 - [ ] A negative control is asserted: a compliant sample under `src/game/` lints with zero messages, so the test cannot pass by the rules firing on everything.
-- [ ] The fixtures are excluded from `npm run typecheck` and from `npm run lint`'s own file set, so both stay green with deliberately illegal files committed — asserted by running both and observing exit 0.
+- [ ] The fixtures are excluded from `npm run typecheck` and from `npm run lint`'s own file set, so both stay green with deliberately illegal files committed — asserted by running both and observing exit 0. **`tests/lint/fixtures/` needs a non-type-checked override in `eslint.config.js`, not an `ignores` entry.** `tsconfig.json` excludes that directory, so Sprint 2's type-aware `projectService` block reports a parsing error on a real `.ts` file there; but adding the directory to `ignores` would make these four fixtures silently lint clean and prove nothing, which is the exact failure this story exists to catch. Give the glob its own flat-config entry with type-checked rules disabled, so the boundary and purity rules still fire on it. Sprint 7 owns `eslint.config.js`, so no `Touches:` change is needed.
 - [ ] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
 
 ---
@@ -2388,12 +2388,14 @@ committed golden fixtures.
 
 ## Sprint 54 — Non-blocking Cleanup [NOT STARTED]
 
-**Goal:** Drain the accumulated non-blocking improvements from the Sprint 1, 5 and 6 reviews, and give `tests/scaffold/**` and `tsconfig.json` an owner after Sprint 1 — three separate backlog items were stuck on nobody declaring them.
+**Goal:** Drain the accumulated non-blocking improvements from the Sprint 1, 2, 5 and 6 reviews, and give `tests/scaffold/**`, `tsconfig.json`, `.gitignore` and `.prettierignore` an owner after Sprint 1 — four separate backlog items were stuck on nobody declaring them.
 
 **Track:** M0 fan
 **Estimate:** 3h augmented
-**Dependencies:** Sprint 5, Sprint 6, Sprint 8
-**Touches:** `tests/scaffold/**`, `tests/styles/tokens.ts`, `tsconfig.json`, `scripts/e2e.mjs`, `tests/e2e/config.spec.ts`
+**Dependencies:** Sprint 2, Sprint 5, Sprint 6, Sprint 8
+**Touches:** `tests/scaffold/**`, `tests/styles/tokens.ts`, `tsconfig.json`, `scripts/e2e.mjs`, `tests/e2e/config.spec.ts`, `.gitignore`, `.prettierignore`
+
+**Why Sprint 2:** the `lint-probe.*` ignore entries below only mean anything once `tests/scaffold/lint-config.test.ts` exists to write those probes, which is Sprint 2's deliverable. Sprint 2 is already DONE, so the edge costs no wall-clock.
 
 **Why Sprint 8:** Sprint 8 splits Vitest into node and jsdom projects and asserts that no committed test file falls outside a project. Any test file this sprint adds under `tests/scaffold/**` must land in the right project, so it runs after that split rather than racing it.
 
@@ -2401,6 +2403,8 @@ committed golden fixtures.
 
 - [ ] `playwright.config.ts` is named in `tsconfig.json`'s `include` so it is typechecked directly rather than only transitively via `tests/e2e/config.spec.ts` importing it — today it would silently drop out of `tsc --noEmit` if that spec moved or stopped importing it. *(from Sprint 6 review)*
 - [ ] `tests/scaffold/title-screen.test.tsx` imports `channels` / `luminance` / `contrastRatio` from `tests/styles/tokens.ts` instead of carrying a byte-identical second copy of the WCAG formula; the duplicate implementation is deleted and the reference-value anchor (`#777777` on white → 4.48) is asserted once, in `tests/styles/tokens.ts`'s own suite. *(from Sprint 5 review)*
+
+- [ ] `lint-probe.*` is listed in both `.gitignore` and `.prettierignore`. `tests/scaffold/lint-config.test.ts` writes `tests/scaffold/lint-probe.<pid>.ts` into the working tree for the ~1.5s a probe lint run takes and removes it in a `finally`; a hard kill (Ctrl-C, CI timeout, OOM) mid-run leaves one behind, where it reds `npm run lint`, `prettier --check .` and `git status` until someone deletes it by hand. One line in each file makes the leftover inert. Sprint 2 correctly declined — it owns neither file. *(from Sprint 2 review, PR #2 cycle 3)*
 
 ### S54-2 — Cover the e2e wrapper's own failure paths
 
@@ -2429,12 +2433,16 @@ inside a pull request. Append here; do not fix in place mid-sprint.
 | Sprint 5 (PR #4, cycle 1) | **PF-7** — the legacy `.woff` payload (~50 kB, three files, unreferenced by any §9.8 target browser) needs `vite.config.ts` to drop, and `@fontsource/anton` / `@fontsource/nunito-sans` sit in `devDependencies` while `tokens.css` imports them as runtime assets, so `npm ci --omit=dev` fails to resolve them. No sprint declared `vite.config.ts` before Sprint 53, and none declared `package.json` after Sprint 1. | Sprint 5, Sprint 53 | **CLOSED** — drained at this sync. **Sprint 5.1** declares `vite.config.ts`, `package.json` and `package-lock.json` and carries S5.1-2 for both fixes plus the `>= 3` → exactly-3 stem-count tightening the reviewer asked for in the same change. Sprint 5.1 is the only sprint besides Sprint 1 that opens the manifest, so standing instruction 4's serialisation cost is paid once. |
 | Sprint 5 (PR #4, cycle 1) | **PF-8** — `tests/styles/tokens.ts` and `tests/scaffold/title-screen.test.tsx` now carry byte-identical `channels` / `luminance` / `contrastRatio` implementations. Sprint 5's `Touches:` excluded `tests/scaffold/**`, and no sprint after Sprint 1 declared it — the same gap that stranded two Sprint 6 improvements. | Sprint 54 | **CLOSED** — drained at this sync. New **Sprint 54 — Non-blocking Cleanup** declares `tests/scaffold/**` and `tsconfig.json` and carries the dedup (S54-1) alongside the three stranded Sprint 6 items. |
 | Sprint 5 (PR #4, cycle 1) | **PF-9** — `--step-*` are absolute `px`, so type does not scale with a browser font-size preference, a §9.7 accessibility consideration. S5-1 mandated px explicitly, so Sprint 5 is correct as specified. | PRD §9.3 / §9.7 | **OPEN — human decision.** This is a PRD question, not a sprint defect: switching to `rem` changes §9.3's published scale and the parsing assertions that read it. Recorded as a Question below rather than drained, because the standing instructions forbid an agent widening PRD scope. |
+| Sprint 2 (PR #2, cycle 3) | **PF-10** — `tests/scaffold/lint-config.test.ts` writes `tests/scaffold/lint-probe.<pid>.ts` into the working tree and removes it in a `finally`. A hard kill mid-run leaves the probe behind, where it reds `npm run lint`, `prettier --check .` and `git status` until deleted by hand. Adding `lint-probe.*` to `.gitignore` and `.prettierignore` makes the leftover inert, but neither file is in Sprint 2's `Touches:` and no sprint after Sprint 1 declared either. | Sprint 54 | **CLOSED** — drained at this sync. `.gitignore` and `.prettierignore` added to Sprint 54's `Touches:`, with the one-line-each fix as a criterion under S54-1 and a `Sprint 2` dependency edge so the sprint that writes the probes lands first. Sprint 2 is already DONE, so the edge costs no wall-clock. Note this is the hard-kill case only — the primary fix, making probe bodies Prettier-clean, shipped inside PR #2. |
+| Sprint 2 (PR #2, cycles 1 & 3) | **PF-11** — S7-3 commits four deliberately-illegal `.ts` fixtures under `tests/lint/fixtures/` and requires `npm run lint` to stay green. `tsconfig.json` excludes that directory, so Sprint 2's type-aware `projectService` block reports a parsing error on any real `.ts` file there — but the obvious workaround, adding the directory to `ignores`, would make all four fixtures lint clean and prove nothing, defeating the story. S7-3 named neither hazard. | Sprint 7 | **CLOSED** — drained at this sync. S7-3's exclusion criterion now states the mechanism explicitly: a non-type-checked flat-config override for the `tests/lint/fixtures/` glob, never an `ignores` entry, so the boundary and purity rules still fire on the fixtures. Sprint 7 already owns `eslint.config.js`; `Touches:` unchanged. |
 
 ### Questions — need a human answer
 
 Answer inline by replacing the `_awaiting answer_` text, then check the box.
 
 - [ ] **(Sprint 5, PR #4)** Should the `--step-*` type scale move from absolute `px` to `rem`, so type scales with a browser font-size preference (§9.7)? S5-1 specified `px` explicitly and the parsing assertions read the published §9.3 values, so this is a PRD change rather than a sprint fix — it would touch `tokens.css`, `tests/styles/tokens.test.ts` and PRD §9.3 together. Cost is small now and grows with every stylesheet that consumes the scale. — _awaiting answer_
+
+- [ ] **(Sprint 2, PR #2)** Should the project adopt `eslint-plugin-react-hooks` v7's `recommended` preset, or keep enabling the two chartered rules individually? Sprint 2 deliberately did **not** adopt `recommended`: its `react-hooks/static-components` rule rejects Sprint 1's screen registry — the placeholder-module-per-screen pattern that is the reason no screen sprint has to edit `src/app/App.tsx`. So `rules-of-hooks` and `exhaustive-deps` are enabled individually at `error`, exactly as S2-1 charters. Adopting the preset later means either restructuring the registry or carrying a permanent `static-components: off`. The reviewer accepted the deviation and asked for a deliberate decision once the screen-registry pattern settles — realistically after Sprint 33/34. Nothing is blocked either way; the gate is green as configured. — _awaiting answer_
 
 ### Improvements — Sprint 6 review (PR #3), non-blocking
 
@@ -2448,6 +2456,29 @@ the Sprint 54 story that carries it, and they get checked when Sprint 54 merges.
 - [ ] **(Sprint 6)** No unit coverage of `scripts/e2e.mjs`'s own failure paths — the CLI-resolution failure and the absent-chromium preflight are each three lines and were verified only by hand (`npm run e2e -- --grep <no-match>` exits 1). A wrapper unit test belongs in `tests/scaffold/`, which Sprint 6 does not own, and asserting it from `tests/e2e/**` would mean spawning the runner from inside the runner. Whichever sprint takes it must declare `tests/scaffold/**`. *(triaged → S54-2)*
 - [ ] **(Sprint 6)** The chromium preflight in `scripts/e2e.mjs` probes `chromium.executablePath()`, which on recent Playwright versions can name the full Chromium build while a headless run launches the headless shell — so the probe can pass while a *different* binary is missing. The failure mode is declining to give a true install hint, never giving a false one, and Playwright's own launch error names the install command in that case. Fix, if taken, is to probe the binary the configured launch mode actually uses. *(triaged → S54-2)*
 - [ ] **(Sprint 6)** The repo-name-literal check in `tests/e2e/config.spec.ts` strips comments and then forbids any named `/segment/` path in a string literal, but is evadable by splitting the literal (`'/kopi-uncle' + '/'` passes). Adversarial-only — every realistic accidental regression the reviewer mutation-tested is caught. Fix, if taken, is to evaluate concatenations or assert on the module's exported `BASE_URL` instead. *(triaged → S54-2)*
+
+**Drainage log — Sprint 2 sync (2026-08-28).** Sprint 2 merged via PR #2 with 0
+blockers. The review ran three cycles and closed at `637457c` with an explicit
+`READY_TO_MERGE` verdict; all five S2-1 acceptance criteria are met and were
+independently re-verified by the reviewer (full gate green, and the warning
+probe confirmed to produce exactly one warning and zero errors, so the gate's
+non-zero exit stays attributable to `--max-warnings 0` alone). **No followup
+sub-sprint was created — nothing of Sprint 2's own scope was deferred.** Every
+cycle-1 non-blocker (seven) and the single cycle-2 non-blocker were fixed inside
+PR #2.
+
+Both plan findings were drained here rather than deferred, per standing
+instruction 6. PF-10 needed a file owner — nothing after Sprint 1 declared
+`.gitignore` or `.prettierignore` — and Sprint 54 already existed as the cleanup
+sprint holding the other stranded-owner items, so it took both paths plus a
+`Sprint 2` dependency edge. PF-11 needed no new owner at all: Sprint 7 already
+owns `eslint.config.js`, and the finding was that S7-3 did not say *which*
+mechanism to use, so the criterion now names the non-type-checked override and
+rules out the `ignores` entry that would have made the story vacuous. Both edits
+are reversible in one line and neither widens any sprint's scope. The react-hooks
+`recommended` question is a design trade-off against Sprint 1's screen registry,
+not a defect, and is recorded as a Question for the human rather than decided by
+an agent.
 
 **Drainage log — Sprint 6 sync (2026-08-28).** Sprint 6 merged via PR #3 with 0
 blockers; all six S6-1 acceptance criteria are met and were independently
