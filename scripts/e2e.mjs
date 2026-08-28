@@ -1,60 +1,47 @@
 #!/usr/bin/env node
 /**
- * KOPI_SCAFFOLD_PLACEHOLDER — the `npm run e2e` gate stage, standing in until
- * Sprint 6 (S6-1) wires Playwright against the built app on its base path.
+ * The `npm run e2e` gate stage (S6-1). Runs Playwright against a fresh build
+ * served by `vite preview` on the base path Vite resolved — see
+ * `playwright.config.ts`.
  *
- * It lives in its own file so that S6-1 replaces a file it owns instead of the
- * shared `package.json`. The npm script stays `node scripts/e2e.mjs` forever;
- * only this body changes.
+ * It stays an indirection through this file rather than naming the tool in
+ * `package.json`, so the manifest is never the file two sprints have to share.
  *
- * It refuses to pass vacuously: the moment `tests/e2e/` holds a spec — at any
- * depth — there is a real browser test that this script is not running, so it
- * exits 1 and forces the swap. That guard takes no override — the tree it walks
- * is always this file's own parent, so nothing in the environment can talk it
- * into a green gate. The test that exercises the refusal copies this script
- * into a temporary tree and runs the copy.
- *
- * Remove the KOPI_SCAFFOLD_PLACEHOLDER marker above when replacing this file —
- * the scaffold tests that assert placeholder behaviour retire on its absence.
+ * The one out-of-band install step is `npx playwright install --with-deps
+ * chromium`; the config declares chromium as its only project, so no other
+ * browser binary is ever required. A missing binary is reported here as the
+ * install command to run rather than as a wall of Playwright output.
  */
-import { readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, relative, resolve } from 'node:path';
-
-const REPLACED_BY = 'S6-1 (Sprint 6 — Playwright under the base path)';
+import { dirname, join, resolve } from 'node:path';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const e2eDir = join(root, 'tests', 'e2e');
 
-function findSpecs(dir) {
-  let entries;
-  try {
-    entries = readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return [];
-  }
-  const found = [];
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      found.push(...findSpecs(full));
-    } else if (/\.spec\.tsx?$/.test(entry.name)) {
-      found.push(relative(root, full));
-    }
-  }
-  return found;
-}
+const playwrightCli = join(root, 'node_modules', '@playwright', 'test', 'cli.js');
 
-const specs = findSpecs(e2eDir).sort();
-
-if (specs.length > 0) {
-  console.error(
-    `e2e: found ${specs.length} spec file(s) under tests/e2e/ that this placeholder ` +
-      `does not run — ${specs.join(', ')}. ${REPLACED_BY} has not replaced it. ` +
-      `Refusing to report a green gate.`,
-  );
+if (!existsSync(playwrightCli)) {
+  console.error('e2e: @playwright/test is not installed — run `npm ci` first.');
   process.exit(1);
 }
 
-console.log(`e2e: placeholder — no browser tests run. Replaced by ${REPLACED_BY}.`);
-process.exit(0);
+const result = spawnSync(process.execPath, [playwrightCli, 'test', ...process.argv.slice(2)], {
+  cwd: root,
+  stdio: 'inherit',
+  env: process.env,
+});
+
+if (result.error) {
+  console.error(`e2e: failed to start Playwright — ${result.error.message}`);
+  process.exit(1);
+}
+
+if (result.status !== 0) {
+  console.error(
+    'e2e: Playwright reported failures. If the browser binary is missing, run ' +
+      '`npx playwright install --with-deps chromium`.',
+  );
+}
+
+process.exit(result.status ?? 1);
