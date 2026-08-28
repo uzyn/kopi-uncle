@@ -3,8 +3,8 @@
 **Derived from:** `docs/prd.md` v1.2 (2026-08-27)
 **Team:** Solo human owner (U-Zyn Chua) plus unattended AI agent sprint loop
 **Merge mode:** `sprintkit-autopilot`, direct to `main` — every sprint merge changes what `npm run dev` shows
-**Total sprints:** 53
-**Total estimate:** 205 augmented-hours
+**Total sprints:** 55 (53 planned + Sprint 5.1 followup + Sprint 54 cleanup)
+**Total estimate:** 210 augmented-hours
 **Window:** Wed 2026-08-26 ~17:00 SGT → **code freeze Fri 2026-08-28 06:00 SGT** (~37h)
 **Talk:** NUS-ISS Learning Festival 2026, Fri 2026-08-28, 09:30 SGT
 
@@ -152,7 +152,7 @@ unattended run, and it buys nothing the local server does not already give you.
 | Tier | Sprints | What exists when it lands |
 |---|---|---|
 | **0 — Floor** | 1 | `npm run dev` serves a page, the gate chain runs, every dependency installed. **This must land.** |
-| **1 — Contract** | 2–13 | The frozen seam, CI, the lint rules, tokens, the stub and fixtures — and the fan is visibly running |
+| **1 — Contract** | 2–13, 5.1, 54 | The frozen seam, CI, the lint rules, tokens, the stub and fixtures — and the fan is visibly running |
 | **2 — Tracks** | 14–35 | Grammar exhaustively verified; the bag and cup render; slot controls and queue cards work against fixtures |
 | **3 — Playable** | 36–46 | Someone can run it locally and play the game |
 | **4 — Ship** | 47–52 | Daily, share, stats, screens, accessibility |
@@ -377,7 +377,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 5 — Design tokens, both fonts and the contrast matrix [IN PROGRESS]
+## Sprint 5 — Design tokens, both fonts and the contrast matrix [DONE]
 
 **Goal:** Commit the palette, type scale and both fonts with WCAG contrast asserted, so that §9.7's AA floor is a gate failure rather than a review opinion.
 
@@ -393,13 +393,51 @@ committed golden fixtures.
 **Technical context:** The contrast test parses the hex values out of `tokens.css` rather than restating them, so editing a token to a failing value fails the test instead of silently diverging from it. §9.2's kaya-yellow-on-cream pair at 1.61:1 is the defect v1.1 corrected, so the test asserts the exclusions too.
 
 **Acceptance criteria:**
-- [ ] `src/styles/tokens.css` declares exactly the six §9.2 custom properties with exact values: `--kopitiam-green: #0E6B4F`, `--tile-teal: #2A9D8F`, `--kaya-yellow: #F4B93E`, `--chilli-red: #D62828`, `--condensed-cream: #FFF3D6`, `--teak: #4A2C18`.
-- [ ] Seven type-scale tokens exist — `--step-12`, `--step-14`, `--step-16`, `--step-20`, `--step-28`, `--step-40`, `--step-64` — with values 12, 14, 16, 20, 28, 40 and 64px, asserted by parsing the file.
-- [ ] Both faces are subset-imported from `@fontsource`: `@fontsource/anton/latin-400.css`, and Nunito Sans latin weights 400 and 700 only; the fallback stacks are exactly `'Anton', 'Arial Narrow', system-ui, sans-serif` and `'Nunito Sans', system-ui, -apple-system, sans-serif`, with `font-display: swap`.
-- [ ] No runtime font fetch (§3.3): `dist/` contains zero occurrences of `fonts.googleapis.com` or `fonts.gstatic.com`, and the font files are emitted into `dist/assets` — both grep assertions.
-- [ ] The contrast-matrix unit test parses the token values from `tokens.css` and asserts all six §9.2 approved pairs to within ±0.01: teak/cream 11.44, teak/kaya 7.12, `#FFFFFF`/green 6.49, cream/green 5.89, `#FFFFFF`/chilli 5.01, chilli/cream 4.54.
-- [ ] The same test asserts the two forbidden pairs fail the 4.5:1 floor — kaya-yellow on cream at 1.61 and tile-teal on cream at 3.01 — so the table's exclusions are load-bearing rather than decorative.
-- [ ] No §9.2 hex literal appears anywhere under `src/` outside `tokens.css`, closing S1-2's inlined wordmark colours in `src/app/TitleScreen.module.css` — grep assertion, zero hits. Placeholder screen modules carry no §9.2 literal of their own; if one has appeared, it is converted here too.
+- [x] `src/styles/tokens.css` declares exactly the six §9.2 custom properties with exact values: `--kopitiam-green: #0E6B4F`, `--tile-teal: #2A9D8F`, `--kaya-yellow: #F4B93E`, `--chilli-red: #D62828`, `--condensed-cream: #FFF3D6`, `--teak: #4A2C18`.
+- [x] Seven type-scale tokens exist — `--step-12`, `--step-14`, `--step-16`, `--step-20`, `--step-28`, `--step-40`, `--step-64` — with values 12, 14, 16, 20, 28, 40 and 64px, asserted by parsing the file.
+- [x] Both faces are subset-imported from `@fontsource`: `@fontsource/anton/latin-400.css`, and Nunito Sans latin weights 400 and 700 only; the fallback stacks are exactly `'Anton', 'Arial Narrow', system-ui, sans-serif` and `'Nunito Sans', system-ui, -apple-system, sans-serif`, with `font-display: swap`.
+- [x] No runtime font fetch (§3.3): `dist/` contains zero occurrences of `fonts.googleapis.com` or `fonts.gstatic.com`, and the font files are emitted into `dist/assets` — both grep assertions.
+- [x] The contrast-matrix unit test parses the token values from `tokens.css` and asserts all six §9.2 approved pairs to within ±0.01: teak/cream 11.44, teak/kaya 7.12, `#FFFFFF`/green 6.49, cream/green 5.89, `#FFFFFF`/chilli 5.01, chilli/cream 4.54.
+- [x] The same test asserts the two forbidden pairs fail the 4.5:1 floor — kaya-yellow on cream at 1.61 and tile-teal on cream at 3.01 — so the table's exclusions are load-bearing rather than decorative.
+- [x] No §9.2 hex literal appears anywhere under `src/` outside `tokens.css`, closing S1-2's inlined wordmark colours in `src/app/TitleScreen.module.css` — grep assertion, zero hits. Placeholder screen modules carry no §9.2 literal of their own; if one has appeared, it is converted here too.
+- [x] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
+
+---
+
+## Sprint 5.1 — Token entry point and font payload [NOT STARTED]
+
+**Goal:** Give the tokens sheet a real entry-module home and shed the legacy font payload, so that the palette and both faces no longer depend on one screen's stylesheet being eagerly imported.
+
+**Track:** M0 fan
+**Estimate:** 2h augmented
+**Dependencies:** Sprint 5
+**Touches:** `src/main.tsx`, `src/app/TitleScreen.module.css`, `src/styles/**`, `tests/styles/**`, `vite.config.ts`, `package.json`, `package-lock.json`
+
+**Why this sprint exists:** Sprint 5 shipped correctly but three of its follow-ups had no legal owner anywhere in the plan — no sprint declared `src/main.tsx`, `vite.config.ts` (before Sprint 53) or `package.json` (after Sprint 1). This sprint owns exactly those files so the work has a home. It edits `package.json`, so the scheduler will serialise it against anything else that does; run it inside Sprint 1's fan where nothing else declares the manifest.
+
+### S5.1-1 — Move the tokens `@import` to the entry module
+
+*As a Track B agent, I want the palette and both faces pulled in by the entry module, so that a lazy route or a code-split entry cannot silently drop them from every other screen.*
+
+**Context:** Sprint 5 reached `src/styles/tokens.css` via an `@import` at the top of `src/app/TitleScreen.module.css`, because `src/main.tsx` was outside its declared `Touches:`. It works today only because `src/app/App.tsx` imports all six screens eagerly. A second screen stylesheet that also `@import`s the tokens would duplicate the `:root` block *and* all three `@font-face` rules in the bundle. Sprint 5 left a named tripwire in `tests/styles/tokens.test.ts` asserting the `TitleScreen` edge by regex, with a message telling the next reader to move the import before removing the assertion — this sprint is that reader.
+
+**Acceptance criteria:**
+- [ ] `src/main.tsx` imports `./styles/tokens.css` as the single global sheet, and the `@import` line is removed from `src/app/TitleScreen.module.css`.
+- [ ] The Sprint 5 tripwire in `tests/styles/tokens.test.ts` (the `/@import\s+["'][^"']*styles\/tokens\.css["']/` assertion against `TitleScreen.module.css`) is replaced by one asserting the entry module carries the import and that **no** module stylesheet under `src/` `@import`s `tokens.css` — grep assertion, zero hits.
+- [ ] The built stylesheet still carries the six §9.2 colour tokens, the seven `--step-*` tokens and exactly three `@font-face` rules — no rule is duplicated by the move, asserted by counting `@font-face` occurrences in `dist/assets/index-*.css`.
+- [ ] The build-based assertions continue to run against a private `mkdtemp` outDir with `--emptyOutDir`, never the shared `dist/`, so `npm run test` stays deterministic against `tests/scaffold/build.test.ts`.
+
+### S5.1-2 — Drop the legacy `.woff` payload and promote both `@fontsource` packages
+
+*As a player on 4G, I want only the font bytes my browser can use, so that §9.8's 2-second interactive target is not spent on a format no §9.8 target browser requests.*
+
+**Context:** `@fontsource` emits a `.woff` beside every `.woff2` — three extra files, roughly 50 kB, unreferenced by every browser in §9.8's target class. §9.8 excludes fonts from the 200 kB budget so no criterion is broken, but it doubles the font bytes on the critical path. Separately, `@fontsource/anton` and `@fontsource/nunito-sans` sit in `devDependencies` (pre-existing from Sprint 1) while `src/styles/tokens.css` imports them as runtime assets, so an `npm ci --omit=dev` build fails to resolve them. Sprint 5 is what made them load-bearing; neither file was in its scope.
+
+**Acceptance criteria:**
+- [ ] `vite.config.ts` excludes the legacy `.woff` files from the emitted assets (e.g. via an `assetFileNames`/plugin filter), and `dist/assets` contains zero `.woff` files that are not `.woff2` — grep assertion.
+- [ ] `@fontsource/anton` and `@fontsource/nunito-sans` move from `devDependencies` to `dependencies` in `package.json`, with `package-lock.json` regenerated; the §10.1 deny-list check from S1-2 still passes (neither is a CSS framework, state library, game engine or animation library).
+- [ ] A build from a production-only install resolves both faces: `npm ci --omit=dev && npm run build` exits 0 and emits all three `.woff2` files under `dist/assets`.
+- [ ] The distinct-stem count assertion in `tests/styles/bundled-fonts.test.ts` is tightened from `>= 3` to exactly 3 now that the `.woff` twins are gone — the reviewer flagged that with both formats emitted the effective count was six, making the loose bound misleading.
 - [ ] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
 
 ---
@@ -1452,7 +1490,7 @@ committed golden fixtures.
 **Track:** Track B (presentation)
 **Estimate:** 4h augmented
 **Dependencies:** Sprint 27
-**Touches:** `src/graphics/**`, `src/styles/motion.css`
+**Touches:** `src/graphics/**`, `src/styles/motion.css`, `tests/styles/**`
 
 ### S28-1 — Vessel transition with a reduced-motion branch
 
@@ -2348,6 +2386,31 @@ committed golden fixtures.
 
 ---
 
+## Sprint 54 — Non-blocking Cleanup [NOT STARTED]
+
+**Goal:** Drain the accumulated non-blocking improvements from the Sprint 1, 5 and 6 reviews, and give `tests/scaffold/**` and `tsconfig.json` an owner after Sprint 1 — three separate backlog items were stuck on nobody declaring them.
+
+**Track:** M0 fan
+**Estimate:** 3h augmented
+**Dependencies:** Sprint 5, Sprint 6, Sprint 8
+**Touches:** `tests/scaffold/**`, `tests/styles/tokens.ts`, `tsconfig.json`, `scripts/e2e.mjs`, `tests/e2e/config.spec.ts`
+
+**Why Sprint 8:** Sprint 8 splits Vitest into node and jsdom projects and asserts that no committed test file falls outside a project. Any test file this sprint adds under `tests/scaffold/**` must land in the right project, so it runs after that split rather than racing it.
+
+### S54-1 — Give the shared config surfaces an owner
+
+- [ ] `playwright.config.ts` is named in `tsconfig.json`'s `include` so it is typechecked directly rather than only transitively via `tests/e2e/config.spec.ts` importing it — today it would silently drop out of `tsc --noEmit` if that spec moved or stopped importing it. *(from Sprint 6 review)*
+- [ ] `tests/scaffold/title-screen.test.tsx` imports `channels` / `luminance` / `contrastRatio` from `tests/styles/tokens.ts` instead of carrying a byte-identical second copy of the WCAG formula; the duplicate implementation is deleted and the reference-value anchor (`#777777` on white → 4.48) is asserted once, in `tests/styles/tokens.ts`'s own suite. *(from Sprint 5 review)*
+
+### S54-2 — Cover the e2e wrapper's own failure paths
+
+- [ ] A unit test under `tests/scaffold/` covers `scripts/e2e.mjs`'s CLI-resolution failure and its absent-chromium preflight — both were verified only by hand in Sprint 6, and asserting them from `tests/e2e/**` would mean spawning the runner from inside the runner. *(from Sprint 6 review)*
+- [ ] The chromium preflight in `scripts/e2e.mjs` probes the binary the configured launch mode actually uses, not `chromium.executablePath()` — on recent Playwright versions that names the full Chromium build while a headless run launches the headless shell, so the probe can pass while a different binary is missing. The current failure mode is only ever a missing install hint, never a false one, so this is a sharpening rather than a bug fix. *(from Sprint 6 review)*
+- [ ] The repo-name-literal check in `tests/e2e/config.spec.ts` asserts on the module's exported base URL (or evaluates string concatenations) rather than forbidding named `/segment/` path literals after comment-stripping — the current form is evadable by splitting the literal (`'/kopi-uncle' + '/'` passes). Adversarial-only; every realistic accidental regression the reviewer mutation-tested is already caught. *(from Sprint 6 review)*
+- [ ] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
+
+---
+
 ## Non-blocking Review Backlog
 
 Plan findings raised during review that do not block the PR they were found in,
@@ -2361,18 +2424,30 @@ inside a pull request. Append here; do not fix in place mid-sprint.
 | Sprint 1 (PR #1, cycle 1) | **PF-2** — S46-1's grep for zero occurrences of `src/dev` across `src/` and `tests/` matches `tests/scaffold/tree.test.ts`, which names `src/dev` in `DEV_DIRS` and in its `skipIf` guard. Sprint 46 does not own `tests/scaffold/**`. | Sprint 46 | **CLOSED** — drained at this sync. S46-1's exclusion list now reads `tests/lint/fixtures/` **and `tests/scaffold/`**, with the reason recorded inline: the `skipIf` guard is the correct self-retiring behaviour, not a leftover. `Touches:` unchanged. |
 | Sprint 1 (PR #1, cycle 2) | **PF-3** — `tests/scaffold/build.test.ts` imports `basePathFor` from `vite.config.ts` and spawns two builds. If S8-1 splits Vitest into node and jsdom projects that file belongs in the node project, but Sprint 8 owns `vitest.config.ts` and not `tests/scaffold/**`. | Sprint 8 | **CLOSED** — drained at this sync. S8-1 gains a criterion placing `build.test.ts` in the node project and `title-screen.test.tsx` in the jsdom project, asserting no committed test file falls outside a project. The project globs live in `vitest.config.ts`, which Sprint 8 already owns, so `Touches:` is unchanged. |
 | Sprint 6 (PR #3) | **PF-4** — S53-2 requires the e2e suite to run once against the deployed URL via a base-URL override, but Sprint 53's `Touches:` omitted `playwright.config.ts`, which is the only file where `use.baseURL` / `e2eBaseURLFor` can be overridden. Sprint 53 had no legal file in which to implement its own criterion. | Sprint 53 | **CLOSED** — drained at this sync. `playwright.config.ts` added to Sprint 53's `Touches:`, and S53-2's criterion now names `e2eBaseURLFor` as the seam to override. No other sprint declares that file after Sprint 6, so the added path creates no new collision. |
+| Sprint 5 (PR #4, cycle 1) | **PF-5** — no sprint in this file owns `src/main.tsx` (`grep -n "main.tsx" docs/sprint.md` returned zero hits), so the follow-up Sprint 5 deferred — move the tokens `@import` to the entry module and drop it from `TitleScreen.module.css` — had no scheduled home. Without one the `@import` stays on one screen's stylesheet permanently and every later screen sprint has to remember not to re-import the tokens. | Sprint 5, all later screen sprints | **CLOSED** — drained at this sync. New **Sprint 5.1** declares `src/main.tsx` and carries S5.1-1: move the import, retarget Sprint 5's named tripwire at the entry module, and assert no module stylesheet `@import`s `tokens.css`. |
+| Sprint 5 (PR #4, cycle 1) | **PF-6** — Sprint 28 creates `src/styles/motion.css` but its `Touches:` was `src/graphics/**`, `src/styles/motion.css` only. `tests/styles/tokens.test.ts` asserts *set equality* on `tokens.css`'s `@import` list, so if Sprint 28's natural wiring is to `@import` motion.css from tokens.css it reds an assertion in a file it may not edit. | Sprint 28 | **CLOSED** — drained at this sync. `tests/styles/**` added to Sprint 28's `Touches:`. Only Sprint 5 (DONE) and Sprint 5.1 also declare that path, so the addition serialises Sprint 28 against nothing that is live. The breakpoint token scheduled for `tokens.css` in Sprint 34 is unaffected — it is neither a hex nor a `--step-`, so neither exactness assertion catches it. |
+| Sprint 5 (PR #4, cycle 1) | **PF-7** — the legacy `.woff` payload (~50 kB, three files, unreferenced by any §9.8 target browser) needs `vite.config.ts` to drop, and `@fontsource/anton` / `@fontsource/nunito-sans` sit in `devDependencies` while `tokens.css` imports them as runtime assets, so `npm ci --omit=dev` fails to resolve them. No sprint declared `vite.config.ts` before Sprint 53, and none declared `package.json` after Sprint 1. | Sprint 5, Sprint 53 | **CLOSED** — drained at this sync. **Sprint 5.1** declares `vite.config.ts`, `package.json` and `package-lock.json` and carries S5.1-2 for both fixes plus the `>= 3` → exactly-3 stem-count tightening the reviewer asked for in the same change. Sprint 5.1 is the only sprint besides Sprint 1 that opens the manifest, so standing instruction 4's serialisation cost is paid once. |
+| Sprint 5 (PR #4, cycle 1) | **PF-8** — `tests/styles/tokens.ts` and `tests/scaffold/title-screen.test.tsx` now carry byte-identical `channels` / `luminance` / `contrastRatio` implementations. Sprint 5's `Touches:` excluded `tests/scaffold/**`, and no sprint after Sprint 1 declared it — the same gap that stranded two Sprint 6 improvements. | Sprint 54 | **CLOSED** — drained at this sync. New **Sprint 54 — Non-blocking Cleanup** declares `tests/scaffold/**` and `tsconfig.json` and carries the dedup (S54-1) alongside the three stranded Sprint 6 items. |
+| Sprint 5 (PR #4, cycle 1) | **PF-9** — `--step-*` are absolute `px`, so type does not scale with a browser font-size preference, a §9.7 accessibility consideration. S5-1 mandated px explicitly, so Sprint 5 is correct as specified. | PRD §9.3 / §9.7 | **OPEN — human decision.** This is a PRD question, not a sprint defect: switching to `rem` changes §9.3's published scale and the parsing assertions that read it. Recorded as a Question below rather than drained, because the standing instructions forbid an agent widening PRD scope. |
+
+### Questions — need a human answer
+
+Answer inline by replacing the `_awaiting answer_` text, then check the box.
+
+- [ ] **(Sprint 5, PR #4)** Should the `--step-*` type scale move from absolute `px` to `rem`, so type scales with a browser font-size preference (§9.7)? S5-1 specified `px` explicitly and the parsing assertions read the published §9.3 values, so this is a PRD change rather than a sprint fix — it would touch `tokens.css`, `tests/styles/tokens.test.ts` and PRD §9.3 together. Cost is small now and grows with every stylesheet that consumes the scale. — _awaiting answer_
 
 ### Improvements — Sprint 6 review (PR #3), non-blocking
 
 Concrete items with clear implementation direction, all accepted as correctly
 deferred by the reviewer. They accumulate here until a cleanup sprint triages
-them; four unchecked items is below the eight-item trigger, so no cleanup sprint
-was created at this sync.
+them. **All four were triaged into Sprint 54 at the Sprint 5 sync** — they are
+left unchecked here because they are scheduled, not done; each is annotated with
+the Sprint 54 story that carries it, and they get checked when Sprint 54 merges.
 
-- [ ] **(Sprint 6)** `playwright.config.ts` is typechecked only transitively, via `tests/e2e/config.spec.ts` importing it — it would silently drop out of `tsc --noEmit` if that spec ever moved or stopped importing it. Fix is to name `playwright.config.ts` in `tsconfig.json`'s `include`. **No sprint after Sprint 1 declares `tsconfig.json` in its `Touches:`**, so whichever sprint takes this item must add that path — Sprint 6 correctly declined because it owns neither.
-- [ ] **(Sprint 6)** No unit coverage of `scripts/e2e.mjs`'s own failure paths — the CLI-resolution failure and the absent-chromium preflight are each three lines and were verified only by hand (`npm run e2e -- --grep <no-match>` exits 1). A wrapper unit test belongs in `tests/scaffold/`, which Sprint 6 does not own, and asserting it from `tests/e2e/**` would mean spawning the runner from inside the runner. Whichever sprint takes it must declare `tests/scaffold/**`.
-- [ ] **(Sprint 6)** The chromium preflight in `scripts/e2e.mjs` probes `chromium.executablePath()`, which on recent Playwright versions can name the full Chromium build while a headless run launches the headless shell — so the probe can pass while a *different* binary is missing. The failure mode is declining to give a true install hint, never giving a false one, and Playwright's own launch error names the install command in that case. Fix, if taken, is to probe the binary the configured launch mode actually uses.
-- [ ] **(Sprint 6)** The repo-name-literal check in `tests/e2e/config.spec.ts` strips comments and then forbids any named `/segment/` path in a string literal, but is evadable by splitting the literal (`'/kopi-uncle' + '/'` passes). Adversarial-only — every realistic accidental regression the reviewer mutation-tested is caught. Fix, if taken, is to evaluate concatenations or assert on the module's exported `BASE_URL` instead.
+- [ ] **(Sprint 6)** `playwright.config.ts` is typechecked only transitively, via `tests/e2e/config.spec.ts` importing it — it would silently drop out of `tsc --noEmit` if that spec ever moved or stopped importing it. Fix is to name `playwright.config.ts` in `tsconfig.json`'s `include`. **No sprint after Sprint 1 declares `tsconfig.json` in its `Touches:`**, so whichever sprint takes this item must add that path — Sprint 6 correctly declined because it owns neither. *(triaged → S54-1)*
+- [ ] **(Sprint 6)** No unit coverage of `scripts/e2e.mjs`'s own failure paths — the CLI-resolution failure and the absent-chromium preflight are each three lines and were verified only by hand (`npm run e2e -- --grep <no-match>` exits 1). A wrapper unit test belongs in `tests/scaffold/`, which Sprint 6 does not own, and asserting it from `tests/e2e/**` would mean spawning the runner from inside the runner. Whichever sprint takes it must declare `tests/scaffold/**`. *(triaged → S54-2)*
+- [ ] **(Sprint 6)** The chromium preflight in `scripts/e2e.mjs` probes `chromium.executablePath()`, which on recent Playwright versions can name the full Chromium build while a headless run launches the headless shell — so the probe can pass while a *different* binary is missing. The failure mode is declining to give a true install hint, never giving a false one, and Playwright's own launch error names the install command in that case. Fix, if taken, is to probe the binary the configured launch mode actually uses. *(triaged → S54-2)*
+- [ ] **(Sprint 6)** The repo-name-literal check in `tests/e2e/config.spec.ts` strips comments and then forbids any named `/segment/` path in a string literal, but is evadable by splitting the literal (`'/kopi-uncle' + '/'` passes). Adversarial-only — every realistic accidental regression the reviewer mutation-tested is caught. Fix, if taken, is to evaluate concatenations or assert on the module's exported `BASE_URL` instead. *(triaged → S54-2)*
 
 **Drainage log — Sprint 6 sync (2026-08-28).** Sprint 6 merged via PR #3 with 0
 blockers; all six S6-1 acceptance criteria are met and were independently
@@ -2393,5 +2468,40 @@ single dependency edge Sprint 8 → Sprint 6, and PF-2 and PF-3 were absorbed by
 sprints that already owned the file the fix lives in. No blocking work was
 carried over from Sprint 1: the review found 0 blockers, all six cycle-1
 non-blockers were fixed in the same PR, and all 15 acceptance criteria are met.
+
+**Drainage log — Sprint 5 sync (2026-08-28).** Sprint 5 merged via PR #4 with 0
+open blockers; all eight S5-1 acceptance criteria are met. The cycle-1 blocker —
+`tests/styles/bundled-fonts.test.ts` racing `tests/scaffold/build.test.ts` over a
+shared `dist/`, roughly 1 failure in 8 runs — was fixed inside Sprint 5's own
+`Touches:` by building into a private `mkdtemp` outDir, and the reviewer
+independently re-verified it at 20/20 green runs with no temp-dir leak. Both
+cycle-1 non-blockers were fixed in the same PR. **No followup sub-sprint was
+created for unmet acceptance criteria — nothing of Sprint 5's own scope was
+deferred.** Sprint 5.1 exists for a different reason: three follow-ups the
+reviewer named had no legal owner anywhere in the plan (`src/main.tsx`,
+`vite.config.ts` before Sprint 53, `package.json` after Sprint 1), and per
+standing instruction 6 a plan defect is drained between sprints rather than left
+to red a sprint that cannot fix it.
+
+Two of the five plan findings (PF-6, PF-8) were drained as one-line or
+one-sprint edits; two (PF-5, PF-7) needed a file owner and got Sprint 5.1; the
+fifth (PF-9) is a PRD question and is recorded above for the human rather than
+decided by an agent, per standing instruction 1's limit — it keeps the build
+green either way, so nothing is blocked on the answer.
+
+**Cleanup triage fired at this sync.** Three syncs have now passed since the
+backlog was created (Sprints 1, 6, 5) which meets the three-sprint trigger even
+though the unchecked-improvement count (five) is below eight. The deciding factor
+is that three separate improvements were all stuck on the same missing owner:
+nothing after Sprint 1 declared `tests/scaffold/**` or `tsconfig.json`. Sprint 54
+declares both and drains all five. It depends on Sprint 8 because Sprint 8's
+node/jsdom project split must be in place before new files land under
+`tests/scaffold/**`.
+
+**Note on PR #4's review history.** Reviews `5049118749` and `5049134339` on PR
+#4 are voided — a shared scratchpad file was overwritten by a concurrent runner,
+and both carry the Sprint 6 re-review body, which correctly lives on PR #3. The
+authoritative Sprint 5 cycle-2 verdict is review `5049148874`; this sync reads
+that one and cycle 1 (`5049053363`), and ignores the two voided bodies.
 
 ---
