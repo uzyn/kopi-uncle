@@ -251,7 +251,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 2 — ESLint 9, type-aware [NOT STARTED]
+## Sprint 2 — ESLint 9, type-aware [IN PROGRESS]
 
 **Goal:** Put a real, type-aware linter behind `npm run lint`, so that Sprint 7's boundary and purity rules have the analysis they need.
 
@@ -277,7 +277,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 3 — The frozen contract [NOT STARTED]
+## Sprint 3 — The frozen contract [IN PROGRESS]
 
 **Goal:** Freeze `types.ts`, `config.ts`, `view.ts` and the three engine signatures — everything both tracks compile against — so that every logic and presentation sprint after this one can start from the same fixed surface.
 
@@ -377,7 +377,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 5 — Design tokens, both fonts and the contrast matrix [NOT STARTED]
+## Sprint 5 — Design tokens, both fonts and the contrast matrix [IN PROGRESS]
 
 **Goal:** Commit the palette, type scale and both fonts with WCAG contrast asserted, so that §9.7's AA floor is a gate failure rather than a review opinion.
 
@@ -404,7 +404,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 6 — Playwright under the base path [NOT STARTED]
+## Sprint 6 — Playwright under the base path [IN PROGRESS]
 
 **Goal:** Put a real browser runner behind `npm run e2e` against the built app on its real subpath, so that a base-path regression fails the gate rather than production.
 
