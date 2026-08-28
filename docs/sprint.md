@@ -404,7 +404,7 @@ committed golden fixtures.
 
 ---
 
-## Sprint 6 — Playwright under the base path [IN PROGRESS]
+## Sprint 6 — Playwright under the base path [DONE]
 
 **Goal:** Put a real browser runner behind `npm run e2e` against the built app on its real subpath, so that a base-path regression fails the gate rather than production.
 
@@ -418,12 +418,12 @@ committed golden fixtures.
 *As the implementing agent, I want e2e to run against the built app on its real subpath, so that a base-path regression fails the gate rather than production.*
 
 **Acceptance criteria:**
-- [ ] `playwright.config.ts` has `testDir: 'tests/e2e'` and a `projects` array of length exactly 1, chromium — asserted by a unit test importing the config.
-- [ ] `webServer` runs `vite preview` against a fresh build on a fixed strict port, with `url` including whatever base path the build resolved — read from the Vite config, never written as a literal — and `reuseExistingServer: !process.env.CI`.
-- [ ] `use.baseURL` ends with that same resolved base path, so a relative `page.goto('./')` resolves under it; running the suite with `GITHUB_REPOSITORY=acme/demo` set still passes, proving nothing is pinned to one repository name.
-- [ ] `tests/e2e/smoke.spec.ts` navigates relatively and asserts the `KOPI UNCLE` wordmark is visible; `npm run e2e` exits 0 from a clean checkout with no server already running.
-- [ ] Only chromium binaries are required: `npx playwright install --with-deps chromium` is sufficient for `npm run e2e` to pass on a machine with no other browsers installed.
-- [ ] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
+- [x] `playwright.config.ts` has `testDir: 'tests/e2e'` and a `projects` array of length exactly 1, chromium — asserted by a unit test importing the config.
+- [x] `webServer` runs `vite preview` against a fresh build on a fixed strict port, with `url` including whatever base path the build resolved — read from the Vite config, never written as a literal — and `reuseExistingServer: !process.env.CI`.
+- [x] `use.baseURL` ends with that same resolved base path, so a relative `page.goto('./')` resolves under it; running the suite with `GITHUB_REPOSITORY=acme/demo` set still passes, proving nothing is pinned to one repository name.
+- [x] `tests/e2e/smoke.spec.ts` navigates relatively and asserts the `KOPI UNCLE` wordmark is visible; `npm run e2e` exits 0 from a clean checkout with no server already running.
+- [x] Only chromium binaries are required: `npx playwright install --with-deps chromium` is sufficient for `npm run e2e` to pass on a machine with no other browsers installed.
+- [x] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
 
 ---
 
@@ -2317,7 +2317,7 @@ committed golden fixtures.
 **Track:** M4 publish
 **Estimate:** 3h augmented
 **Dependencies:** Sprint 4, Sprint 52
-**Touches:** `.github/workflows/**`, `vite.config.ts`, `src/app/BuildStamp.tsx`, `src/app/BuildStamp.module.css`, `scripts/verify-deploy.mjs`, `README.md`, `tests/e2e/**`
+**Touches:** `.github/workflows/**`, `vite.config.ts`, `src/app/BuildStamp.tsx`, `src/app/BuildStamp.module.css`, `scripts/verify-deploy.mjs`, `README.md`, `tests/e2e/**`, `playwright.config.ts`
 
 **Technical context:** Everything here was Sprint 1's job in the v1.2 plan. It is last now for two reasons. A deployed URL is a standing obligation — standing instruction 3 would make any red URL preempt the current sprint, which across an unattended overnight run is an expensive interrupt for something nobody is watching. And the `base` path, the only part a late deploy could plausibly get wrong, was already derived and proven in S1-1, so nothing needs retrofitting.
 
@@ -2343,7 +2343,7 @@ committed golden fixtures.
 - [ ] The stamp values are injected at build time via `define` in `vite.config.ts` from `GITHUB_SHA` and the build clock; `GITHUB_SHA=deadbeefcafe npm run build` produces a `dist/` in which `deadbee` appears — grep assertion.
 - [ ] `scripts/verify-deploy.mjs` fetches the deployed page and asserts the wordmark and the build stamp are present and that every referenced asset returns `200`, retrying on both a non-200 *and* a stale commit SHA so that Pages serving the previous build briefly does not red the run. Its behaviour is asserted by a test that serves a good fixture and a broken one over a local HTTP server and checks exit 0 and exit 1 — not by grepping its source.
 - [ ] `README.md` records the live URL as reported by the deploy workflow and the deployed build stamp; the check derives the expected `https://<owner>.github.io/<repo>/` from `GITHUB_REPOSITORY` rather than a literal, and **skips rather than fails when `GITHUB_REPOSITORY` is absent or names a different repository**, so a fork's gate stays green.
-- [ ] The full e2e suite runs once against the deployed URL via a base-URL override and passes.
+- [ ] The full e2e suite runs once against the deployed URL via a base-URL override and passes. Sprint 6 exported `e2eBaseURLFor(githubRepository)` from `playwright.config.ts` as the single place the runner's URL is assembled, so the override is a change to that seam (e.g. honouring `PLAYWRIGHT_TEST_BASE_URL`) rather than a second copy of the base-path logic; `playwright.config.ts` is declared in this sprint's `Touches:` for exactly that edit.
 - [ ] The full gate passes: `npm run typecheck && npm run lint && npm run test && npm run build && npm run e2e`.
 
 ---
@@ -2360,6 +2360,28 @@ inside a pull request. Append here; do not fix in place mid-sprint.
 | Sprint 1 (PR #1, cycle 1) | **PF-1** — S8-1 requires "a committed placeholder spec under `tests/e2e/`" to prove Vitest's exclusion, but S1-1 mandates that `scripts/e2e.mjs` exit 1 on any `*.spec.ts` under `tests/e2e/` at any depth. Sprint 8 depended only on Sprint 3 and owns neither `scripts/e2e.mjs` (Sprint 6) nor `tests/e2e/**`, so scheduled before Sprint 6 it reds its own gate with no file it may edit. | Sprint 8 | **CLOSED** — drained at this sync. Sprint 8 now declares `**Dependencies:** Sprint 3, Sprint 6` and asserts the exclusion against Sprint 6's committed `tests/e2e/smoke.spec.ts` rather than committing one of its own; `Touches:` is unchanged. Sprint 6 is inside Sprint 1's fan, so the edge costs no wall-clock. |
 | Sprint 1 (PR #1, cycle 1) | **PF-2** — S46-1's grep for zero occurrences of `src/dev` across `src/` and `tests/` matches `tests/scaffold/tree.test.ts`, which names `src/dev` in `DEV_DIRS` and in its `skipIf` guard. Sprint 46 does not own `tests/scaffold/**`. | Sprint 46 | **CLOSED** — drained at this sync. S46-1's exclusion list now reads `tests/lint/fixtures/` **and `tests/scaffold/`**, with the reason recorded inline: the `skipIf` guard is the correct self-retiring behaviour, not a leftover. `Touches:` unchanged. |
 | Sprint 1 (PR #1, cycle 2) | **PF-3** — `tests/scaffold/build.test.ts` imports `basePathFor` from `vite.config.ts` and spawns two builds. If S8-1 splits Vitest into node and jsdom projects that file belongs in the node project, but Sprint 8 owns `vitest.config.ts` and not `tests/scaffold/**`. | Sprint 8 | **CLOSED** — drained at this sync. S8-1 gains a criterion placing `build.test.ts` in the node project and `title-screen.test.tsx` in the jsdom project, asserting no committed test file falls outside a project. The project globs live in `vitest.config.ts`, which Sprint 8 already owns, so `Touches:` is unchanged. |
+| Sprint 6 (PR #3) | **PF-4** — S53-2 requires the e2e suite to run once against the deployed URL via a base-URL override, but Sprint 53's `Touches:` omitted `playwright.config.ts`, which is the only file where `use.baseURL` / `e2eBaseURLFor` can be overridden. Sprint 53 had no legal file in which to implement its own criterion. | Sprint 53 | **CLOSED** — drained at this sync. `playwright.config.ts` added to Sprint 53's `Touches:`, and S53-2's criterion now names `e2eBaseURLFor` as the seam to override. No other sprint declares that file after Sprint 6, so the added path creates no new collision. |
+
+### Improvements — Sprint 6 review (PR #3), non-blocking
+
+Concrete items with clear implementation direction, all accepted as correctly
+deferred by the reviewer. They accumulate here until a cleanup sprint triages
+them; four unchecked items is below the eight-item trigger, so no cleanup sprint
+was created at this sync.
+
+- [ ] **(Sprint 6)** `playwright.config.ts` is typechecked only transitively, via `tests/e2e/config.spec.ts` importing it — it would silently drop out of `tsc --noEmit` if that spec ever moved or stopped importing it. Fix is to name `playwright.config.ts` in `tsconfig.json`'s `include`. **No sprint after Sprint 1 declares `tsconfig.json` in its `Touches:`**, so whichever sprint takes this item must add that path — Sprint 6 correctly declined because it owns neither.
+- [ ] **(Sprint 6)** No unit coverage of `scripts/e2e.mjs`'s own failure paths — the CLI-resolution failure and the absent-chromium preflight are each three lines and were verified only by hand (`npm run e2e -- --grep <no-match>` exits 1). A wrapper unit test belongs in `tests/scaffold/`, which Sprint 6 does not own, and asserting it from `tests/e2e/**` would mean spawning the runner from inside the runner. Whichever sprint takes it must declare `tests/scaffold/**`.
+- [ ] **(Sprint 6)** The chromium preflight in `scripts/e2e.mjs` probes `chromium.executablePath()`, which on recent Playwright versions can name the full Chromium build while a headless run launches the headless shell — so the probe can pass while a *different* binary is missing. The failure mode is declining to give a true install hint, never giving a false one, and Playwright's own launch error names the install command in that case. Fix, if taken, is to probe the binary the configured launch mode actually uses.
+- [ ] **(Sprint 6)** The repo-name-literal check in `tests/e2e/config.spec.ts` strips comments and then forbids any named `/segment/` path in a string literal, but is evadable by splitting the literal (`'/kopi-uncle' + '/'` passes). Adversarial-only — every realistic accidental regression the reviewer mutation-tested is caught. Fix, if taken, is to evaluate concatenations or assert on the module's exported `BASE_URL` instead.
+
+**Drainage log — Sprint 6 sync (2026-08-28).** Sprint 6 merged via PR #3 with 0
+blockers; all six S6-1 acceptance criteria are met and were independently
+re-verified by the reviewer from a clean extract, in both base-path
+configurations. No followup sub-sprint was created — nothing was deferred. The
+one plan finding (PF-4) was drained here rather than deferred, per standing
+instruction 6: a one-path edit to Sprint 53's `Touches:` plus a clarifying
+clause on S53-2, both reversible in one line. The four remaining items are
+non-blocking improvements and are held for the next cleanup triage.
 
 **Drainage log — Sprint 1 sync (2026-08-27).** All three plan findings from PR
 #1 were resolved in this file rather than deferred, per standing instruction 6
