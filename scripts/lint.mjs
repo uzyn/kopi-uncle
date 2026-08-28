@@ -1,50 +1,62 @@
 #!/usr/bin/env node
 /**
- * KOPI_SCAFFOLD_PLACEHOLDER — the `npm run lint` gate stage, standing in until
- * Sprint 2 (S2-1) wires ESLint 9 flat config.
+ * The `npm run lint` gate stage (S2-1) — the real linter, no longer a scaffold
+ * placeholder.
  *
- * It lives in its own file so that S2-1 replaces a file it owns instead of the
- * shared `package.json`. The npm script stays `node scripts/lint.mjs` forever;
- * only this body changes.
+ * It stays an indirection through this file rather than naming `eslint` in
+ * `package.json`, because the manifest is the one file `Touches:` cannot keep
+ * two concurrent sprints out of: the lint and e2e stages each own a script so
+ * Sprints 2 and 6 never collide (PRD §11.3).
  *
- * It refuses to pass vacuously: the moment an `eslint.config.*` exists, a real
- * linter is available and reporting green from here would be a lie, so this
- * exits 1 and forces the swap. That guard takes no override — the directory it
- * inspects is always this file's own parent, so nothing in the environment can
- * talk it into a green gate. The test that exercises the refusal copies this
- * script into a temporary tree and runs the copy.
- *
- * Remove the KOPI_SCAFFOLD_PLACEHOLDER marker above when replacing this file —
- * the scaffold tests that assert placeholder behaviour retire on its absence.
+ * `--max-warnings 0` is the whole point of the stage. A warning nobody has to
+ * fix is a rule that does nothing, so the gate treats the two severities alike.
  */
-import { readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-
-const REPLACED_BY = 'S2-1 (Sprint 2 — ESLint 9, type-aware)';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-function eslintConfigIn(dir) {
-  let entries;
+/**
+ * ESLint's `bin/` is outside its `exports` map, so the bin path is read from the
+ * manifest rather than hard-coded. `eslint/package.json` *is* exported, which
+ * means the package root comes from Node's own resolver and no `node_modules`
+ * layout is assumed — pnpm's virtual store, Yarn PnP and `npm link` all work.
+ */
+function resolveEslintBin() {
+  const require = createRequire(import.meta.url);
+  let manifestPath;
   try {
-    entries = readdirSync(dir);
-  } catch {
-    return null;
+    manifestPath = require.resolve('eslint/package.json');
+  } catch (error) {
+    throw new Error(`could not resolve the eslint package — ${error.message}`);
   }
-  return entries.find((name) => /^eslint\.config\.[cm]?[jt]s$/.test(name)) ?? null;
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.eslint;
+  if (typeof bin !== 'string') {
+    throw new Error(`eslint's manifest at ${manifestPath} declares no bin entry`);
+  }
+  return join(dirname(manifestPath), bin);
 }
 
-const found = eslintConfigIn(root);
-
-if (found !== null) {
-  console.error(
-    `lint: ${found} exists, so a real linter is configured, but ${REPLACED_BY} has ` +
-      `not replaced this placeholder. Refusing to report a green gate. ` +
-      `Point this script at the real linter, or delete the config.`,
-  );
+let eslintBin;
+try {
+  eslintBin = resolveEslintBin();
+} catch (error) {
+  console.error(`lint: ${error.message}`);
   process.exit(1);
 }
 
-console.log(`lint: placeholder — no files linted. Replaced by ${REPLACED_BY}.`);
-process.exit(0);
+const result = spawnSync(process.execPath, [eslintBin, '.', '--max-warnings', '0'], {
+  cwd: root,
+  stdio: 'inherit',
+});
+
+if (result.error) {
+  console.error(`lint: could not run eslint — ${result.error.message}`);
+  process.exit(1);
+}
+
+process.exit(result.status ?? 1);
