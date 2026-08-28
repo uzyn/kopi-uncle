@@ -14,31 +14,42 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join, resolve, sep } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
- * ESLint's `package.json` and `bin/` are outside its `exports` map, so the
- * package root is recovered from the resolved entry point and the bin path read
- * from the manifest rather than hard-coded.
+ * ESLint's `bin/` is outside its `exports` map, so the bin path is read from the
+ * manifest rather than hard-coded. `eslint/package.json` *is* exported, which
+ * means the package root comes from Node's own resolver and no `node_modules`
+ * layout is assumed — pnpm's virtual store, Yarn PnP and `npm link` all work.
  */
 function resolveEslintBin() {
   const require = createRequire(import.meta.url);
-  const entry = require.resolve('eslint');
-  const marker = `${sep}node_modules${sep}eslint${sep}`;
-  const index = entry.lastIndexOf(marker);
-  if (index === -1) {
-    throw new Error(`could not locate the eslint package from ${entry}`);
+  let manifestPath;
+  try {
+    manifestPath = require.resolve('eslint/package.json');
+  } catch (error) {
+    throw new Error(`could not resolve the eslint package — ${error.message}`);
   }
-  const packageRoot = entry.slice(0, index + marker.length);
-  const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'));
-  const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin.eslint;
-  return join(packageRoot, bin);
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.eslint;
+  if (typeof bin !== 'string') {
+    throw new Error(`eslint's manifest at ${manifestPath} declares no bin entry`);
+  }
+  return join(dirname(manifestPath), bin);
 }
 
-const result = spawnSync(process.execPath, [resolveEslintBin(), '.', '--max-warnings', '0'], {
+let eslintBin;
+try {
+  eslintBin = resolveEslintBin();
+} catch (error) {
+  console.error(`lint: ${error.message}`);
+  process.exit(1);
+}
+
+const result = spawnSync(process.execPath, [eslintBin, '.', '--max-warnings', '0'], {
   cwd: root,
   stdio: 'inherit',
 });

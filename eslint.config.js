@@ -17,7 +17,10 @@ import tseslint from 'typescript-eslint';
  * whitespace drift into a gate failure with a stack trace attached.
  */
 
-const TS_FILES = ['**/*.ts', '**/*.tsx'];
+// `.mts`/`.cts` are listed although the tree has none: typescript-eslint's own
+// `eslint-recommended` claims them, and re-scoping it below would otherwise
+// hand such a file to espree, turning a lint run into a parse error.
+const TS_FILES = ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'];
 const JS_FILES = ['**/*.js', '**/*.mjs', '**/*.cjs'];
 
 /** Scope a borrowed config array to a file glob without mutating the source. */
@@ -44,22 +47,32 @@ export default [
     },
   },
 
-  // Config files and gate scripts are plain ESM outside tsconfig's `include`,
-  // so there is no program to read types from.
-  { files: JS_FILES, ...tseslint.configs.disableTypeChecked },
-
+  // Browser globals stop at the render tree. `src/game/**` is importable in
+  // Node with no DOM, which PRD §10.5 makes a rule Sprint 7 enforces; leaving
+  // `window` and friends out of its scope keeps this config from quietly
+  // contradicting that boundary in the meantime.
   {
     files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/game/**'],
     languageOptions: { globals: globals.browser },
   },
 
+  // Config files and gate scripts are plain ESM run by Node, outside tsconfig's
+  // `include`. `no-undef` is live here — typescript-eslint's `eslint-recommended`
+  // turns it off for TS — so this is the one place the global set decides
+  // whether a typo is caught, hence Node's names alone and no browser ones.
   {
-    files: [...JS_FILES, '*.config.ts', 'tests/**/*.{ts,tsx}'],
+    files: JS_FILES,
+    languageOptions: { globals: globals.node },
+  },
+
+  {
+    files: ['*.config.ts', 'tests/**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 
-  // React lives only under these two trees (PRD §10.2); `src/game/**` is
-  // importable in Node with no browser globals and must never see a hook.
+  // React lives only under these two trees (PRD §10.2); `src/game/**` must
+  // never see a hook.
   //
   // The two rules are named individually rather than pulled in through the
   // plugin's `recommended` set. v7's set is much wider than the hook rules and
